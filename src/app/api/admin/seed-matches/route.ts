@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MATCHES } from "@/lib/matches";
+import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
 import { getSheetsClient, getSheetId } from "@/lib/sheets";
 
 const MATCHES_RANGE = "Matches!A2:H";
@@ -22,24 +23,36 @@ export async function GET(request: NextRequest) {
 
     const rows = response.data.values ?? [];
 
-    if (rows.length > 0) {
+    const values = [
+      ...MATCHES.map((match) => [
+        match.id,
+        match.homeTeam,
+        match.awayTeam,
+        match.group,
+        match.matchDate,
+        match.stage,
+        "",
+        "",
+      ]),
+      ...KNOCKOUT_MATCHES.map((match) => [
+        match.id,
+        match.homeTeam || match.homeTeamPlaceholder || "",
+        match.awayTeam || match.awayTeamPlaceholder || "",
+        match.group,
+        match.matchDate,
+        match.stage,
+        "",
+        "",
+      ]),
+    ];
+
+    if (rows.length >= values.length) {
       return NextResponse.json({ skipped: true, message: "Matches sheet already seeded" });
     }
 
-    const values = MATCHES.map((match) => [
-      match.id,
-      match.homeTeam,
-      match.awayTeam,
-      match.group,
-      match.matchDate,
-      match.stage,
-      "",
-      "",
-    ]);
-
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: MATCHES_RANGE,
+      range: `Matches!A2:H${values.length + 1}`,
       valueInputOption: "RAW",
       requestBody: { values },
     });
