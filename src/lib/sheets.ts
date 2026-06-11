@@ -6,7 +6,7 @@ import { calculatePoints } from "./scoring";
 const PREDICTIONS_RANGE = "Predictions!A2:G";
 const MATCHES_RANGE = "Matches!A2:H";
 
-function getSheetId(): string {
+export function getSheetId(): string {
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   if (!sheetId) {
     throw new Error("Missing GOOGLE_SHEETS_ID environment variable");
@@ -14,7 +14,7 @@ function getSheetId(): string {
   return sheetId;
 }
 
-function getSheetsClient(): sheets_v4.Sheets {
+export function getSheetsClient(): sheets_v4.Sheets {
   const encodedKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!encodedKey) {
     throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_KEY environment variable");
