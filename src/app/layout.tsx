@@ -35,11 +35,9 @@ export default function RootLayout({
           <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
             <Link href="/">
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <img
-                  src="/citizens-logo.png"
-                  alt="Citizens Bank"
-                  style={{ height: "32px", filter: "brightness(0) invert(1)" }}
-                />
+                <div style={{ backgroundColor: "white", borderRadius: "6px", padding: "4px 10px", display: "flex", alignItems: "center" }}>
+                  <img src="/citizens-logo.png" alt="Citizens" style={{ height: "28px", width: "auto" }} />
+                </div>
                 <span style={{ color: "#FFD700", fontFamily: "Bebas Neue", fontSize: "20px", letterSpacing: "2px" }}>
                   WORLD CUP PREDICTOR
                 </span>
