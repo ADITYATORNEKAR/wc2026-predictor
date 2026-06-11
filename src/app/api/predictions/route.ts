@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPredictions, addPrediction } from "@/lib/sheets";
+import { MATCHES } from "@/lib/matches";
 
 export async function GET() {
   try {
@@ -20,14 +21,30 @@ function isValidScore(value: unknown): value is number {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userName, matchId, predictedHome, predictedAway } = body ?? {};
+    const { userName, userEmail, matchId, predictedHome, predictedAway } = body ?? {};
 
-    if (typeof userName !== "string" || userName.trim() === "") {
-      return NextResponse.json({ error: "userName is required" }, { status: 400 });
+    if (typeof userEmail !== "string" || !userEmail.toLowerCase().endsWith("@citizensbank.com")) {
+      return NextResponse.json({ error: "Unauthorized email domain" }, { status: 403 });
     }
+
+    const resolvedUserName =
+      typeof userName === "string" && userName.trim() !== "" ? userName.trim() : userEmail.split("@")[0];
 
     if (typeof matchId !== "string" || matchId.trim() === "") {
       return NextResponse.json({ error: "matchId is required" }, { status: 400 });
+    }
+
+    const match = MATCHES.find((m) => m.id === matchId);
+
+    if (!match) {
+      return NextResponse.json({ error: "Match not found" }, { status: 400 });
+    }
+
+    if (new Date(match.matchDate) <= new Date()) {
+      return NextResponse.json(
+        { error: "Predictions are closed — this match has already started" },
+        { status: 400 }
+      );
     }
 
     if (!isValidScore(predictedHome)) {
@@ -45,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     await addPrediction({
-      userName,
+      userName: resolvedUserName,
       matchId,
       predictedHome,
       predictedAway,

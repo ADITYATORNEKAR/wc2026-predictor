@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import MatchCard from "@/components/MatchCard";
 import { Match, Prediction } from "@/lib/types";
 
-const NAME_STORAGE_KEY = "wc2026-username";
+const EMAIL_STORAGE_KEY = "wc2026_email";
 
 interface ScoreInput {
   home: string;
@@ -12,7 +12,7 @@ interface ScoreInput {
 }
 
 export default function PredictPage() {
-  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [scores, setScores] = useState<Record<string, ScoreInput>>({});
@@ -21,8 +21,8 @@ export default function PredictPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const storedName = localStorage.getItem(NAME_STORAGE_KEY);
-    if (storedName) setUserName(storedName);
+    const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
+    if (storedEmail) setUserEmail(storedEmail);
 
     fetch("/api/matches")
       .then((res) => res.json())
@@ -41,10 +41,7 @@ export default function PredictPage() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const handleNameChange = (value: string) => {
-    setUserName(value);
-    localStorage.setItem(NAME_STORAGE_KEY, value);
-  };
+  const userName = useMemo(() => userEmail.split("@")[0], [userEmail]);
 
   const userPredictions = useMemo(() => {
     const map = new Map<string, Prediction>();
@@ -79,11 +76,6 @@ export default function PredictPage() {
     const input = getScoreInput(matchId);
     setErrors((prev) => ({ ...prev, [matchId]: "" }));
 
-    if (!userName.trim()) {
-      setErrors((prev) => ({ ...prev, [matchId]: "Enter your name first" }));
-      return;
-    }
-
     const home = Number(input.home);
     const away = Number(input.away);
 
@@ -108,7 +100,8 @@ export default function PredictPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userName: userName.trim(),
+          userName,
+          userEmail,
           matchId,
           predictedHome: home,
           predictedAway: away,
@@ -139,19 +132,7 @@ export default function PredictPage() {
         Make Your Predictions
       </h1>
 
-      <div className="mb-8 rounded-lg border border-[#00573F] bg-[#002820] p-4">
-        <label htmlFor="userName" className="mb-2 block text-sm font-medium text-white">
-          Your Name
-        </label>
-        <input
-          id="userName"
-          type="text"
-          value={userName}
-          onChange={(e) => handleNameChange(e.target.value)}
-          placeholder="Enter your name"
-          className="w-full rounded-md border border-[#00573F] bg-[#003B2B] px-3 py-2 text-white placeholder-white/40 focus:border-[#00A651] focus:outline-none"
-        />
-      </div>
+      <p className="mb-6 text-sm text-[#94a3b8]">Predicting as: {userEmail}</p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {matches.map((match) => {
@@ -165,6 +146,12 @@ export default function PredictPage() {
               <MatchCard match={match} userPrediction={existingPrediction} />
 
               <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
+                {isPast && (
+                  <p className="mb-3 rounded-md bg-red-600/20 px-3 py-2 text-center text-sm font-semibold text-red-400">
+                    🔒 Predictions Closed
+                  </p>
+                )}
+
                 <div className="flex items-center justify-center gap-3">
                   <input
                     type="number"
@@ -191,17 +178,22 @@ export default function PredictPage() {
                   <p className="mt-2 text-center text-sm text-red-400">{errors[match.id]}</p>
                 )}
 
-                {isPast ? (
-                  <p className="mt-3 text-center text-sm text-[#94a3b8]">
-                    Predictions closed — match has started
-                  </p>
-                ) : (
+                {!isPast && (
                   <button
                     onClick={() => handleSubmit(match.id)}
                     disabled={isSaving}
                     className="mt-3 w-full rounded-md bg-[#00A651] px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-[#00A651]/80 disabled:opacity-50"
                   >
                     {isSaving ? "Saving..." : existingPrediction ? "Update Prediction" : "Save Prediction"}
+                  </button>
+                )}
+
+                {isPast && (
+                  <button
+                    disabled
+                    className="mt-3 w-full rounded-md bg-[#00A651] px-4 py-1.5 text-sm font-semibold text-white opacity-50"
+                  >
+                    Save Prediction
                   </button>
                 )}
               </div>
