@@ -50,6 +50,9 @@ export default function RootLayout({
               <Link href="/predict" className="text-white transition hover:text-[#00A651]">
                 Predict
               </Link>
+              <Link href="/my-predictions" className="text-white transition hover:text-[#00A651]">
+                My Predictions
+              </Link>
               <Link href="/standings" className="text-white transition hover:text-[#00A651]">
                 Standings
               </Link>

@@ -1,24 +1,28 @@
-export type ResultLabel = "home" | "away" | "draw";
+export type PredictionOutcome = "home" | "draw" | "away";
 
-export function getResultLabel(home: number, away: number): ResultLabel {
-  if (home > away) return "home";
-  if (home < away) return "away";
+export function getResult(homeScore: number, awayScore: number): PredictionOutcome {
+  if (homeScore > awayScore) return "home";
+  if (homeScore < awayScore) return "away";
   return "draw";
 }
 
 export function calculatePoints(
-  predictedHome: number,
-  predictedAway: number,
+  prediction: PredictionOutcome,
   actualHome: number,
   actualAway: number
 ): number {
-  if (predictedHome === actualHome && predictedAway === actualAway) {
-    return 3;
-  }
-
-  if (getResultLabel(predictedHome, predictedAway) === getResultLabel(actualHome, actualAway)) {
-    return 1;
-  }
-
-  return 0;
+  const actual = getResult(actualHome, actualAway);
+  return prediction === actual ? 3 : 0;
 }
+
+export const OUTCOME_LABELS: Record<PredictionOutcome, string> = {
+  home: "Home Win",
+  draw: "Draw",
+  away: "Away Win",
+};
+
+export const OUTCOME_DISPLAY: Record<PredictionOutcome, string> = {
+  home: "🏠 Home Win",
+  draw: "🤝 Draw",
+  away: "✈️ Away Win",
+};

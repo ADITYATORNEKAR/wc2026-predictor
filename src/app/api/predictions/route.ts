@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPredictions, addPrediction } from "@/lib/sheets";
+import { getPredictions, upsertPrediction } from "@/lib/sheets";
 import { MATCHES } from "@/lib/matches";
+import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
 
 export async function GET() {
   try {
@@ -14,14 +15,14 @@ export async function GET() {
   }
 }
 
-function isValidScore(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 20;
+function isValidPrediction(value: unknown): value is "home" | "draw" | "away" {
+  return value === "home" || value === "draw" || value === "away";
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userName, userEmail, matchId, predictedHome, predictedAway } = body ?? {};
+    const { userName, userEmail, matchId, prediction } = body ?? {};
 
     if (typeof userEmail !== "string" || !userEmail.toLowerCase().endsWith("@citizensbank.com")) {
       return NextResponse.json({ error: "Unauthorized email domain" }, { status: 403 });
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "matchId is required" }, { status: 400 });
     }
 
-    const match = MATCHES.find((m) => m.id === matchId);
+    const match = [...MATCHES, ...KNOCKOUT_MATCHES].find((m) => m.id === matchId);
 
     if (!match) {
       return NextResponse.json({ error: "Match not found" }, { status: 400 });
@@ -47,29 +48,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isValidScore(predictedHome)) {
+    if (!isValidPrediction(prediction)) {
       return NextResponse.json(
-        { error: "predictedHome must be an integer between 0 and 20" },
+        { error: "prediction must be one of: home, draw, away" },
         { status: 400 }
       );
     }
 
-    if (!isValidScore(predictedAway)) {
-      return NextResponse.json(
-        { error: "predictedAway must be an integer between 0 and 20" },
-        { status: 400 }
-      );
-    }
-
-    await addPrediction({
+    const { action } = await upsertPrediction({
       userName: resolvedUserName,
       matchId,
-      predictedHome,
-      predictedAway,
+      prediction,
       submittedAt: new Date().toISOString(),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, action });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to add prediction" },

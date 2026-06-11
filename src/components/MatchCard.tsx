@@ -1,5 +1,6 @@
 import { Match, Prediction } from "@/lib/types";
 import { getFlag } from "@/lib/flags";
+import { OUTCOME_DISPLAY } from "@/lib/scoring";
 
 function formatMatchDate(isoDate: string): string {
   return new Date(isoDate).toLocaleString("en-US", {
@@ -15,13 +16,13 @@ function formatMatchDate(isoDate: string): string {
 function pointsBadgeClasses(points?: number): string {
   if (points === undefined) return "bg-gray-600 text-gray-200";
   if (points === 3) return "bg-[#00A651] text-white";
-  if (points === 1) return "bg-[#FFD700] text-black";
   return "bg-red-600 text-white";
 }
 
 function pointsBadgeLabel(points?: number): string {
-  if (points === undefined) return "Pending";
-  return `${points} pt${points === 1 ? "" : "s"}`;
+  if (points === undefined) return "⏳ Pending";
+  if (points === 3) return "✅ 3pts";
+  return "❌ 0pts";
 }
 
 type LiveStatus = "upcoming" | "live" | "halftime" | "finished";
@@ -110,9 +111,7 @@ export default function MatchCard({
 
       {userPrediction && (
         <div className="mt-3 flex items-center justify-center gap-2 text-sm text-white">
-          <span>
-            Your pick: {userPrediction.predictedHome} - {userPrediction.predictedAway}
-          </span>
+          <span>{OUTCOME_DISPLAY[userPrediction.prediction]}</span>
           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${pointsBadgeClasses(userPrediction.points)}`}>
             {pointsBadgeLabel(userPrediction.points)}
           </span>

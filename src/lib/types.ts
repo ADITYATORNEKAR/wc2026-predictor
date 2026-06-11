@@ -17,8 +17,7 @@ export interface Prediction {
   id: string;
   userName: string;
   matchId: string;
-  predictedHome: number;
-  predictedAway: number;
+  prediction: "home" | "draw" | "away";
   points?: number;
   submittedAt: string;
 }

@@ -1,9 +1,11 @@
 import { google, sheets_v4 } from "googleapis";
 import { randomUUID } from "crypto";
 import { Prediction } from "./types";
-import { calculatePoints } from "./scoring";
+import { calculatePoints, PredictionOutcome } from "./scoring";
+import { MATCHES } from "./matches";
+import { KNOCKOUT_MATCHES } from "./knockout-matches";
 
-const PREDICTIONS_RANGE = "Predictions!A2:G";
+const PREDICTIONS_RANGE = "Predictions!A2:F";
 const MATCHES_RANGE = "Matches!A2:H";
 
 export function getSheetId(): string {
@@ -36,15 +38,21 @@ export function getSheetsClient(): sheets_v4.Sheets {
   return google.sheets({ version: "v4", auth });
 }
 
+export class MatchStartedError extends Error {
+  constructor() {
+    super("Cannot edit prediction — match has already started");
+    this.name = "MatchStartedError";
+  }
+}
+
 function rowToPrediction(row: string[], rowIndex: number): Prediction {
   return {
     id: row[0] ?? "",
     userName: row[1] ?? "",
     matchId: row[2] ?? "",
-    predictedHome: Number(row[3]),
-    predictedAway: Number(row[4]),
-    points: row[5] === undefined || row[5] === "" ? undefined : Number(row[5]),
-    submittedAt: row[6] ?? "",
+    prediction: (row[3] as PredictionOutcome) ?? "draw",
+    points: row[4] === undefined || row[4] === "" ? undefined : Number(row[4]),
+    submittedAt: row[5] ?? "",
   };
 }
 
@@ -67,36 +75,83 @@ export async function getPredictions(): Promise<Prediction[]> {
   }
 }
 
-export async function addPrediction(
+export async function upsertPrediction(
   pred: Omit<Prediction, "id" | "points">
-): Promise<void> {
+): Promise<{ action: "created" | "updated" }> {
   try {
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
 
-    const id = randomUUID();
+    const match = [...MATCHES, ...KNOCKOUT_MATCHES].find((m) => m.id === pred.matchId);
 
-    await sheets.spreadsheets.values.append({
+    if (!match) {
+      throw new Error(`Match with id "${pred.matchId}" not found`);
+    }
+
+    const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: PREDICTIONS_RANGE,
-      valueInputOption: "RAW",
-      requestBody: {
-        values: [
-          [
-            id,
-            pred.userName,
-            pred.matchId,
-            pred.predictedHome,
-            pred.predictedAway,
-            "",
-            pred.submittedAt,
+    });
+
+    const rows = response.data.values ?? [];
+    const rowIndex = rows.findIndex(
+      (row) => row[1] === pred.userName && row[2] === pred.matchId
+    );
+
+    if (rowIndex === -1) {
+      const id = randomUUID();
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: PREDICTIONS_RANGE,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [
+            [
+              id,
+              pred.userName,
+              pred.matchId,
+              pred.prediction,
+              "",
+              pred.submittedAt,
+            ],
           ],
+        },
+      });
+
+      return { action: "created" };
+    }
+
+    if (new Date(match.matchDate) <= new Date()) {
+      throw new MatchStartedError();
+    }
+
+    const sheetRow = rowIndex + 2;
+
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        valueInputOption: "RAW",
+        data: [
+          {
+            range: `Predictions!D${sheetRow}`,
+            values: [[pred.prediction]],
+          },
+          {
+            range: `Predictions!F${sheetRow}`,
+            values: [[pred.submittedAt]],
+          },
         ],
       },
     });
+
+    return { action: "updated" };
   } catch (error) {
+    if (error instanceof MatchStartedError) {
+      throw error;
+    }
     throw new Error(
-      `Failed to add prediction: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to save prediction: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -178,13 +233,12 @@ export async function recalculatePoints(matchId: string): Promise<void> {
     predictionRows.forEach((row, index) => {
       if (row[2] !== matchId) return;
 
-      const predictedHome = Number(row[3]);
-      const predictedAway = Number(row[4]);
-      const points = calculatePoints(predictedHome, predictedAway, actualHomeScore, actualAwayScore);
+      const prediction = row[3] as PredictionOutcome;
+      const points = calculatePoints(prediction, actualHomeScore, actualAwayScore);
       const sheetRow = index + 2;
 
       data.push({
-        range: `Predictions!F${sheetRow}`,
+        range: `Predictions!E${sheetRow}`,
         values: [[points]],
       });
     });
