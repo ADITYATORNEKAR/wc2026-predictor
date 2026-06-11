@@ -20,6 +20,8 @@ export default function AdminPage() {
   const [scores, setScores] = useState<Record<string, ScoreInput>>({});
   const [statuses, setStatuses] = useState<Record<string, MatchStatus>>({});
   const [submittingMatchId, setSubmittingMatchId] = useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = useState<MatchStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -100,6 +102,34 @@ export default function AdminPage() {
     }
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      const response = await fetch("/api/sync-results");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSyncMessage({
+          type: "error",
+          message: (data.errors ?? []).join(", ") || "Failed to sync results",
+        });
+        return;
+      }
+
+      const summary = `✅ Synced ${data.synced} match${data.synced === 1 ? "" : "es"}, recalculated points`;
+      setSyncMessage({
+        type: data.errors?.length ? "error" : "success",
+        message: data.errors?.length ? `${summary} (errors: ${data.errors.join(", ")})` : summary,
+      });
+    } catch {
+      setSyncMessage({ type: "error", message: "Failed to sync results from ESPN" });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const inputStyle = {
     background: "#003B2B",
     color: "#FFFFFF",
@@ -138,6 +168,16 @@ export default function AdminPage() {
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: 16, background: "#003B2B", color: "#FFFFFF", minHeight: "100vh" }}>
       <h1 style={{ color: "#FFD700" }}>Admin: Set Match Results</h1>
+
+      <button onClick={handleSync} disabled={syncing} style={{ ...buttonStyle, marginBottom: 8 }}>
+        {syncing ? "Syncing..." : "🔄 Sync Results from ESPN"}
+      </button>
+      {syncMessage && (
+        <p style={{ color: syncMessage.type === "success" ? "#00A651" : "#ff6b6b" }}>
+          {syncMessage.message}
+        </p>
+      )}
+
       {matches.map((match) => {
         const input = getScoreInput(match.id);
         const status = statuses[match.id];

@@ -1,32 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import MatchCard from "@/components/MatchCard";
-import Leaderboard from "@/components/Leaderboard";
-import { Match } from "@/lib/types";
-
-interface LeaderboardEntry {
-  name: string;
-  points: number;
-}
+import LiveMatchGrid from "@/components/LiveMatchGrid";
+import TopLeaderboard from "@/components/TopLeaderboard";
+import { MATCHES } from "@/lib/matches";
 
 export default function Home() {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-
-  useEffect(() => {
-    fetch("/api/matches")
-      .then((res) => res.json())
-      .then(setMatches)
-      .catch(() => setMatches([]));
-
-    fetch("/api/leaderboard")
-      .then((res) => res.json())
-      .then(setLeaderboard)
-      .catch(() => setLeaderboard([]));
-  }, []);
-
   return (
     <div className="bg-[#003B2B]">
       <section className="bg-gradient-to-b from-[#002820] to-[#003B2B]">
@@ -58,7 +35,7 @@ export default function Home() {
           <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
             Top Predictors
           </h2>
-          <Leaderboard entries={leaderboard.slice(0, 3)} />
+          <TopLeaderboard />
         </div>
       </section>
 
@@ -67,11 +44,10 @@ export default function Home() {
           <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
             Matches
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {matches.map((match) => (
-              <MatchCard key={match.id} match={match} />
-            ))}
-          </div>
+          <LiveMatchGrid initialMatches={MATCHES} />
+          <p className="mt-4 text-center text-xs text-[#94a3b8]">
+            ⚡ Live scores powered by ESPN
+          </p>
         </div>
       </section>
     </div>

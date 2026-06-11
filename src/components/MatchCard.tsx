@@ -78,14 +78,29 @@ function pointsBadgeLabel(points?: number): string {
   return `${points} pt${points === 1 ? "" : "s"}`;
 }
 
+type LiveStatus = "upcoming" | "live" | "halftime" | "finished";
+
 interface MatchCardProps {
   match: Match;
   onPredict?: () => void;
   userPrediction?: Prediction;
+  liveStatus?: LiveStatus;
+  liveHome?: number | null;
+  liveAway?: number | null;
+  displayClock?: string;
 }
 
-export default function MatchCard({ match, onPredict, userPrediction }: MatchCardProps) {
+export default function MatchCard({
+  match,
+  onPredict,
+  userPrediction,
+  liveStatus,
+  liveHome,
+  liveAway,
+  displayClock,
+}: MatchCardProps) {
   const hasResult = match.actualHome !== undefined && match.actualAway !== undefined;
+  const hasLiveScore = liveHome !== null && liveHome !== undefined && liveAway !== null && liveAway !== undefined;
 
   return (
     <div className="rounded-lg border border-[#00573F] border-l-4 border-l-[#00A651] bg-[#002820] p-4 shadow-lg">
@@ -93,7 +108,19 @@ export default function MatchCard({ match, onPredict, userPrediction }: MatchCar
         <span className="rounded-full bg-[#00A651] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
           {match.stage === "Group" ? `Group ${match.group}` : match.stage}
         </span>
-        <span className="text-xs text-white">{formatMatchDate(match.matchDate)}</span>
+        <div className="flex items-center gap-2">
+          {liveStatus === "live" && (
+            <span className="animate-pulse rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+              ● LIVE
+            </span>
+          )}
+          {liveStatus === "halftime" && (
+            <span className="rounded-full bg-orange-500 px-2 py-0.5 text-xs font-bold text-white">
+              HT
+            </span>
+          )}
+          <span className="text-xs text-white">{formatMatchDate(match.matchDate)}</span>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-4">
@@ -111,6 +138,23 @@ export default function MatchCard({ match, onPredict, userPrediction }: MatchCar
           </span>
         </div>
       </div>
+
+      {(liveStatus === "live" || liveStatus === "halftime") && hasLiveScore && (
+        <div className="mt-3 text-center">
+          <div className="text-3xl font-bold text-white">
+            {liveHome} – {liveAway}
+          </div>
+          {liveStatus === "live" && displayClock && (
+            <div className="mt-1 text-xs text-[#94a3b8]">{displayClock}</div>
+          )}
+        </div>
+      )}
+
+      {liveStatus === "finished" && match.actualHome === undefined && hasLiveScore && (
+        <div className="mt-3 text-center font-[family-name:var(--font-heading)] text-lg tracking-wide text-[#FFD700]">
+          FT {liveHome} – {liveAway}
+        </div>
+      )}
 
       {hasResult && (
         <div className="mt-3 text-center font-[family-name:var(--font-heading)] text-lg tracking-wide text-[#FFD700]">
