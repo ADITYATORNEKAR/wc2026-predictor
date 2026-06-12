@@ -47,8 +47,11 @@ export default function RootLayout({
               <Link href="/" className="text-white transition hover:text-[#00A651]">
                 Home
               </Link>
-              <Link href="/predict" className="text-white transition hover:text-[#00A651]">
-                Predict
+              <Link href="/predict-groups" className="text-white transition hover:text-[#00A651]">
+                Group Stage
+              </Link>
+              <Link href="/predict-knockouts" className="text-white transition hover:text-[#00A651]">
+                Knockouts
               </Link>
               <Link href="/special-picks" className="text-white transition hover:text-[#00A651]">
                 Bonus Picks

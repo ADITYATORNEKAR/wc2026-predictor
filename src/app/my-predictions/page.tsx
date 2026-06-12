@@ -73,7 +73,7 @@ export default function MyPredictionsPage() {
     const storedUserName = localStorage.getItem(USERNAME_STORAGE_KEY);
 
     if (!storedEmail || !storedUserName) {
-      router.replace("/predict");
+      router.replace("/predict-groups");
       return;
     }
 
@@ -333,7 +333,7 @@ export default function MyPredictionsPage() {
                 <td className="px-3 py-2">{pointsBadge(prediction?.points, !!result, !!prediction)}</td>
                 {activeTab === "Not Predicted" && (
                   <td className="px-3 py-2">
-                    <Link href="/predict" className="text-sm font-semibold text-[#00A651] transition hover:text-[#00A651]/80">
+                    <Link href="/predict-groups" className="text-sm font-semibold text-[#00A651] transition hover:text-[#00A651]/80">
                       Predict Now →
                     </Link>
                   </td>

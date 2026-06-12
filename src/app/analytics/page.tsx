@@ -29,16 +29,6 @@ interface LeagueSummary {
   topMembers: { name: string; points: number }[];
 }
 
-function PickBar({ homePct, drawPct, awayPct }: { homePct: number; drawPct: number; awayPct: number }) {
-  return (
-    <div className="flex h-3 w-full overflow-hidden rounded-full bg-[#001a13]">
-      <div className="bg-[#00A651]" style={{ width: `${homePct}%` }} />
-      <div className="bg-gray-400" style={{ width: `${drawPct}%` }} />
-      <div className="bg-blue-500" style={{ width: `${awayPct}%` }} />
-    </div>
-  );
-}
-
 export default function AnalyticsPage() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -119,29 +109,6 @@ export default function AnalyticsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const pickCountsByMatch = useMemo(() => {
-    const map = new Map<string, { home: number; draw: number; away: number; total: number }>();
-    for (const prediction of predictions) {
-      const current = map.get(prediction.matchId) ?? { home: 0, draw: 0, away: 0, total: 0 };
-      current[prediction.prediction]++;
-      current.total++;
-      map.set(prediction.matchId, current);
-    }
-    return map;
-  }, [predictions]);
-
-  const crowdMatches = useMemo(() => {
-    return matches
-      .filter((m) => m.actualHome === undefined && m.actualAway === undefined && m.homeTeam && m.awayTeam)
-      .map((match) => {
-        const counts = pickCountsByMatch.get(match.id) ?? { home: 0, draw: 0, away: 0, total: 0 };
-        return { match, counts };
-      })
-      .filter((m) => m.counts.total > 0)
-      .sort((a, b) => b.counts.total - a.counts.total)
-      .slice(0, 5);
-  }, [matches, pickCountsByMatch]);
-
   const wcWinnerStats = useMemo(() => {
     const wcWinnerPicks = specialPredictions.filter((p) => p.type === "wcwinner");
     const total = wcWinnerPicks.length;
@@ -181,47 +148,10 @@ export default function AnalyticsPage() {
     const uniqueUsers = new Set(predictions.map((p) => p.userName)).size;
     const matchesPredicted = new Set(predictions.map((p) => p.matchId)).size;
     const bonusPicksMade = specialPredictions.length;
+    const completedMatches = matches.filter((m) => m.actualHome !== undefined && m.actualHome !== null).length;
 
-    return { totalPredictions, uniqueUsers, matchesPredicted, bonusPicksMade };
-  }, [predictions, specialPredictions]);
-
-  const boldPicks = useMemo(() => {
-    return matches
-      .filter((m) => m.actualHome === undefined && m.actualAway === undefined && m.homeTeam && m.awayTeam)
-      .map((match) => {
-        const counts = pickCountsByMatch.get(match.id) ?? { home: 0, draw: 0, away: 0, total: 0 };
-        if (counts.total === 0) return null;
-
-        const homeRank = FIFA_RANKINGS[match.homeTeam];
-        const awayRank = FIFA_RANKINGS[match.awayTeam];
-        if (!homeRank || !awayRank) return null;
-
-        const majority: "home" | "draw" | "away" =
-          counts.home >= counts.draw && counts.home >= counts.away
-            ? "home"
-            : counts.draw >= counts.away
-              ? "draw"
-              : "away";
-
-        if (majority === "draw") return null;
-
-        const underdog = majority === "home" ? match.homeTeam : match.awayTeam;
-        const favorite = majority === "home" ? match.awayTeam : match.homeTeam;
-        const underdogRank = majority === "home" ? homeRank : awayRank;
-        const favoriteRank = majority === "home" ? awayRank : homeRank;
-
-        if (underdogRank <= favoriteRank) return null;
-
-        const rankGap = underdogRank - favoriteRank;
-        const pickCount = majority === "home" ? counts.home : counts.away;
-        const percentage = Math.round((pickCount / counts.total) * 100);
-
-        return { match, underdog, favorite, underdogRank, favoriteRank, rankGap, percentage };
-      })
-      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
-      .sort((a, b) => b.rankGap - a.rankGap)
-      .slice(0, 5);
-  }, [matches, pickCountsByMatch]);
+    return { totalPredictions, uniqueUsers, matchesPredicted, bonusPicksMade, completedMatches };
+  }, [predictions, specialPredictions, matches]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -236,59 +166,84 @@ export default function AnalyticsPage() {
         <>
           <section className="mt-10">
             <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
-              🌍 Crowd Win Probability
+              📈 Prediction Stats
             </h2>
 
-            {crowdMatches.length === 0 ? (
-              <p className="text-sm text-[#94a3b8]">No predictions yet for upcoming matches.</p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Total Predictions Made</div>
+                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.totalPredictions}</div>
+              </div>
+              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Users Participating</div>
+                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.uniqueUsers}</div>
+              </div>
+              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Matches Predicted</div>
+                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.matchesPredicted}</div>
+              </div>
+              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Bonus Picks Made</div>
+                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.bonusPicksMade}</div>
+              </div>
+              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">✅ Matches Played</div>
+                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.completedMatches}</div>
+              </div>
+              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🌍 Most Backed Country</div>
+                {wcWinnerStats.ranked.length > 0 ? (
+                  <div className="mt-1 text-2xl font-bold text-[#FFD700]">
+                    {getFlag(wcWinnerStats.ranked[0].team)} {wcWinnerStats.ranked[0].team} —{" "}
+                    {wcWinnerStats.total > 0 ? Math.round((wcWinnerStats.ranked[0].count / wcWinnerStats.total) * 100) : 0}% of
+                    users
+                  </div>
+                ) : (
+                  <div className="mt-1 text-2xl font-bold text-[#FFD700]">No picks yet</div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-10">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
+              ⚡ League Battle
+            </h2>
+
+            {leagueSummaries.length === 0 ? (
+              <p className="text-sm text-[#94a3b8]">No leagues found.</p>
             ) : (
-              <div className="space-y-4">
-                {crowdMatches.map(({ match, counts }) => {
-                  const homePct = Math.round((counts.home / counts.total) * 100);
-                  const drawPct = Math.round((counts.draw / counts.total) * 100);
-                  const awayPct = 100 - homePct - drawPct;
-
-                  const majority: "home" | "draw" | "away" =
-                    counts.home >= counts.draw && counts.home >= counts.away
-                      ? "home"
-                      : counts.draw >= counts.away
-                        ? "draw"
-                        : "away";
-
-                  const majorityTeam = majority === "home" ? match.homeTeam : majority === "away" ? match.awayTeam : null;
-                  const majorityPct = majority === "home" ? homePct : majority === "away" ? awayPct : drawPct;
-
-                  return (
-                    <div key={match.id} className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
-                      <p className="mb-2 text-sm text-white">
-                        The crowd thinks:{" "}
-                        {majorityTeam ? (
-                          <span className="font-semibold text-[#FFD700]">
-                            {getFlag(majorityTeam)} {majorityTeam} wins ({majorityPct}%)
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-[#FFD700]">🤝 Draw ({majorityPct}%)</span>
-                        )}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {leagueSummaries.map((league) => (
+                  <div key={league.name} className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
+                    <h3 className="font-[family-name:var(--font-heading)] text-lg tracking-wide text-[#FFD700]">
+                      {league.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-[#94a3b8]">
+                      {league.memberCount} member{league.memberCount === 1 ? "" : "s"} · avg{" "}
+                      {league.averagePoints.toFixed(1)} pts
+                    </p>
+                    {league.topScorer && (
+                      <p className="mt-1 text-sm text-white">
+                        Top: <span className="font-semibold">{league.topScorer.name}</span>{" "}
+                        <span className="text-[#FFD700]">({league.topScorer.points} pts)</span>
                       </p>
+                    )}
 
-                      <div className="flex items-center justify-between gap-2 text-sm text-white">
-                        <span>{getFlag(match.homeTeam)} {match.homeTeam}</span>
-                        <span className="text-xs text-[#94a3b8]">{counts.total} picks</span>
-                        <span>{match.awayTeam} {getFlag(match.awayTeam)}</span>
-                      </div>
-
-                      <div className="mt-2">
-                        <PickBar homePct={homePct} drawPct={drawPct} awayPct={awayPct} />
-                      </div>
-
-                      <div className="mt-1 flex justify-between text-xs text-[#94a3b8]">
-                        <span>{homePct}% Home</span>
-                        <span>{drawPct}% Draw</span>
-                        <span>{awayPct}% Away</span>
-                      </div>
-                    </div>
-                  );
-                })}
+                    {league.topMembers.length > 0 && (
+                      <ul className="mt-3 space-y-1 border-t border-[#00573F] pt-2 text-xs text-white">
+                        {league.topMembers.map((member, index) => (
+                          <li key={member.name} className="flex justify-between">
+                            <span>
+                              {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {member.name}
+                            </span>
+                            <span className="text-[#FFD700]">{member.points} pts</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </section>
@@ -357,100 +312,6 @@ export default function AnalyticsPage() {
                 );
               })}
             </div>
-          </section>
-
-          <section className="mt-10">
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
-              📈 Prediction Stats
-            </h2>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Total Predictions Made</div>
-                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.totalPredictions}</div>
-              </div>
-              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Users Participating</div>
-                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.uniqueUsers}</div>
-              </div>
-              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Matches Predicted</div>
-                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.matchesPredicted}</div>
-              </div>
-              <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-                <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Bonus Picks Made</div>
-                <div className="mt-1 text-4xl font-bold text-[#FFD700]">{predictionStats.bonusPicksMade}</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-10">
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
-              ⚡ League Battle
-            </h2>
-
-            {leagueSummaries.length === 0 ? (
-              <p className="text-sm text-[#94a3b8]">No leagues found.</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {leagueSummaries.map((league) => (
-                  <div key={league.name} className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
-                    <h3 className="font-[family-name:var(--font-heading)] text-lg tracking-wide text-[#FFD700]">
-                      {league.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-[#94a3b8]">
-                      {league.memberCount} member{league.memberCount === 1 ? "" : "s"} · avg{" "}
-                      {league.averagePoints.toFixed(1)} pts
-                    </p>
-                    {league.topScorer && (
-                      <p className="mt-1 text-sm text-white">
-                        Top: <span className="font-semibold">{league.topScorer.name}</span>{" "}
-                        <span className="text-[#FFD700]">({league.topScorer.points} pts)</span>
-                      </p>
-                    )}
-
-                    {league.topMembers.length > 0 && (
-                      <ul className="mt-3 space-y-1 border-t border-[#00573F] pt-2 text-xs text-white">
-                        {league.topMembers.map((member, index) => (
-                          <li key={member.name} className="flex justify-between">
-                            <span>
-                              {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {member.name}
-                            </span>
-                            <span className="text-[#FFD700]">{member.points} pts</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="mt-10">
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
-              🎯 Bold Picks — Biggest Upsets Predicted
-            </h2>
-
-            {boldPicks.length === 0 ? (
-              <p className="text-sm text-[#94a3b8]">No upset picks found.</p>
-            ) : (
-              <div className="space-y-3">
-                {boldPicks.map(({ match, underdog, favorite, underdogRank, favoriteRank, percentage }) => (
-                  <div key={match.id} className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-sm text-white">
-                    {percentage}% of users think{" "}
-                    <span className="font-semibold text-[#FFD700]">
-                      #{underdogRank} {getFlag(underdog)} {underdog}
-                    </span>{" "}
-                    can upset{" "}
-                    <span className="font-semibold text-[#FFD700]">
-                      #{favoriteRank} {getFlag(favorite)} {favorite}
-                    </span>
-                    !
-                  </div>
-                ))}
-              </div>
-            )}
           </section>
         </>
       )}

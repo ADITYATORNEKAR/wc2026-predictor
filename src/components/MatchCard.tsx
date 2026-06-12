@@ -84,19 +84,31 @@ export default function MatchCard({
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-1 items-center justify-end gap-2 text-right">
-          <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
-            {match.homeTeam}
-          </span>
-          <RankBadge team={match.homeTeam} />
-          <span className="text-2xl">{getFlag(match.homeTeam)}</span>
+          {match.homeTeam ? (
+            <>
+              <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
+                {match.homeTeam}
+              </span>
+              <RankBadge team={match.homeTeam} />
+              <span className="text-2xl">{getFlag(match.homeTeam)}</span>
+            </>
+          ) : (
+            <span className="text-sm italic text-[#94a3b8]">{match.homeTeamPlaceholder ?? "TBD"}</span>
+          )}
         </div>
         <span className="font-[family-name:var(--font-heading)] text-xl text-[#00A651]">vs</span>
         <div className="flex flex-1 items-center gap-2">
-          <span className="text-2xl">{getFlag(match.awayTeam)}</span>
-          <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
-            {match.awayTeam}
-          </span>
-          <RankBadge team={match.awayTeam} />
+          {match.awayTeam ? (
+            <>
+              <span className="text-2xl">{getFlag(match.awayTeam)}</span>
+              <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
+                {match.awayTeam}
+              </span>
+              <RankBadge team={match.awayTeam} />
+            </>
+          ) : (
+            <span className="text-sm italic text-[#94a3b8]">{match.awayTeamPlaceholder ?? "TBD"}</span>
+          )}
         </div>
       </div>
 

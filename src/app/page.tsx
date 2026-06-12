@@ -15,7 +15,7 @@ export default function Home() {
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Link
-              href="/predict"
+              href="/predict-groups"
               className="rounded-md bg-[#00A651] px-6 py-3 font-semibold text-white transition hover:bg-[#00A651]/80"
             >
               Make Predictions
