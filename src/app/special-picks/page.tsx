@@ -24,6 +24,7 @@ export default function SpecialPicksPage() {
   const [topScorerPick, setTopScorerPick] = useState<string | null>(null);
   const [wcWinnerPick, setWcWinnerPick] = useState<string | null>(null);
   const [existingPicks, setExistingPicks] = useState<SpecialPrediction[]>([]);
+  const [playerSearch, setPlayerSearch] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,6 +54,13 @@ export default function SpecialPicksPage() {
       .sort((a, b) => (FIFA_RANKINGS[a] ?? 999) - (FIFA_RANKINGS[b] ?? 999))
       .filter((team) => team.toLowerCase().includes(search.toLowerCase()));
   }, [search]);
+
+  const filteredPlayers = useMemo(() => {
+    const query = playerSearch.toLowerCase();
+    return TOP_SCORER_OPTIONS.filter(
+      (player) => player.name.toLowerCase().includes(query) || player.team.toLowerCase().includes(query)
+    );
+  }, [playerSearch]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -117,37 +125,47 @@ export default function SpecialPicksPage() {
             </h2>
             <p className="mb-4 text-sm text-[#94a3b8]">🎯 30 pts if correct</p>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {TOP_SCORER_OPTIONS.map((player) => {
+            <input
+              type="text"
+              value={playerSearch}
+              onChange={(e) => setPlayerSearch(e.target.value)}
+              placeholder="Search players or countries..."
+              className="mb-4 w-full rounded-md border border-[#00573F] bg-[#002820] px-3 py-2 text-white placeholder-white/40 focus:border-[#00A651] focus:outline-none sm:max-w-xs"
+            />
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {filteredPlayers.map((player) => {
                 const isSelected = topScorerPick === player.id;
                 return (
                   <button
                     key={player.id}
                     onClick={() => setTopScorerPick(player.id)}
-                    className={`relative rounded-lg border p-4 text-center transition ${
+                    className={`relative rounded-lg border p-3 text-center transition ${
                       isSelected
                         ? "border-[#FFD700] bg-[#00A651]/20"
                         : "border-[#00573F] bg-[#002820] hover:border-[#00A651]"
                     }`}
                   >
                     {isSelected && (
-                      <span className="absolute right-2 top-2 text-lg text-[#FFD700]">✓</span>
+                      <span className="absolute right-2 top-2 text-base text-[#FFD700]">✓</span>
                     )}
-                    <div className="text-5xl">{player.flag}</div>
-                    <div className="mt-2 font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
+                    <div className="text-4xl">{player.flag}</div>
+                    <div className="mt-1 font-[family-name:var(--font-heading)] text-sm font-bold tracking-wide text-white">
                       {player.name}
                     </div>
-                    <div className="mt-1 flex items-center justify-center gap-1 text-sm text-[#94a3b8]">
-                      <span>{player.flag}</span>
+                    <div className="mt-1 flex items-center justify-center gap-1 text-xs text-[#00A651]">
                       <span>{player.team}</span>
-                      <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-white">
+                      <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
                         #{player.rank}
                       </span>
                     </div>
-                    <div className="mt-2 text-xs font-semibold text-[#FFD700]">🎯 30 pts if correct</div>
+                    <div className="mt-1 text-[10px] font-semibold text-[#FFD700]">🎯 30 pts if correct</div>
                   </button>
                 );
               })}
+              {filteredPlayers.length === 0 && (
+                <p className="col-span-full text-center text-sm text-[#94a3b8]">No players match your search.</p>
+              )}
             </div>
           </section>
 
