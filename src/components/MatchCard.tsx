@@ -1,6 +1,18 @@
 import { Match, Prediction } from "@/lib/types";
 import { getFlag, FLAG_MAP } from "@/lib/flags";
 import { getPredictionDisplay } from "@/lib/scoring";
+import { FIFA_RANKINGS } from "@/lib/rankings";
+
+function RankBadge({ team }: { team: string }) {
+  const rank = FIFA_RANKINGS[team];
+  if (!rank) return null;
+
+  return (
+    <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-white">
+      #{rank}
+    </span>
+  );
+}
 
 function formatMatchDate(isoDate: string): string {
   return new Date(isoDate).toLocaleString("en-US", {
@@ -75,6 +87,7 @@ export default function MatchCard({
           <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
             {match.homeTeam}
           </span>
+          <RankBadge team={match.homeTeam} />
           <span className="text-2xl">{getFlag(match.homeTeam)}</span>
         </div>
         <span className="font-[family-name:var(--font-heading)] text-xl text-[#00A651]">vs</span>
@@ -83,6 +96,7 @@ export default function MatchCard({
           <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
             {match.awayTeam}
           </span>
+          <RankBadge team={match.awayTeam} />
         </div>
       </div>
 

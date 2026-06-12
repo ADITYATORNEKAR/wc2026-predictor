@@ -6,6 +6,14 @@ import MatchCard from "@/components/MatchCard";
 import { Match, Prediction } from "@/lib/types";
 import { PredictionOutcome, getPredictionDisplay } from "@/lib/scoring";
 import { FLAG_MAP } from "@/lib/flags";
+import { FIFA_RANKINGS } from "@/lib/rankings";
+
+function getOutcomeRank(outcome: PredictionOutcome, match: Match): number | undefined {
+  if (outcome === "draw") return undefined;
+  const team = outcome === "home" ? match.homeTeam : match.awayTeam;
+  if (!team) return undefined;
+  return FIFA_RANKINGS[team];
+}
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
 const RULES_DISMISSED_KEY = "wc2026_rules_dismissed";
@@ -232,6 +240,7 @@ export default function PredictPage() {
                         <div className="grid grid-cols-3 gap-2">
                           {(["home", "draw", "away"] as PredictionOutcome[]).map((outcome) => {
                             const isSelected = selection === outcome;
+                            const rank = getOutcomeRank(outcome, match);
                             return (
                               <button
                                 key={outcome}
@@ -245,6 +254,9 @@ export default function PredictPage() {
                               >
                                 {isSaving && isSelected ? "⏳ " : ""}
                                 {getPredictionDisplay(outcome, match, FLAG_MAP)}
+                                {rank !== undefined && (
+                                  <span className="ml-1 text-xs font-normal text-white/60">#{rank}</span>
+                                )}
                               </button>
                             );
                           })}

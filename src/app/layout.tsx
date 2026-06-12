@@ -50,6 +50,9 @@ export default function RootLayout({
               <Link href="/predict" className="text-white transition hover:text-[#00A651]">
                 Predict
               </Link>
+              <Link href="/special-picks" className="text-white transition hover:text-[#00A651]">
+                Bonus Picks
+              </Link>
               <Link href="/my-predictions" className="text-white transition hover:text-[#00A651]">
                 My Predictions
               </Link>
@@ -64,6 +67,9 @@ export default function RootLayout({
               </Link>
               <Link href="/leaderboard" className="text-white transition hover:text-[#00A651]">
                 Leaderboard
+              </Link>
+              <Link href="/analytics" className="text-white transition hover:text-[#00A651]">
+                Analytics
               </Link>
             </div>
           </nav>

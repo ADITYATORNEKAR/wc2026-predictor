@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Match } from "@/lib/types";
+import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
 
 interface ScoreInput {
   home: string;
@@ -25,6 +26,12 @@ export default function AdminPage() {
   const [leagueCounts, setLeagueCounts] = useState<{ name: string; count: number }[]>([]);
   const [seedMessage, setSeedMessage] = useState<MatchStatus | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [topScorerWinner, setTopScorerWinner] = useState("");
+  const [wcWinner, setWcWinner] = useState("");
+  const [topScorerMessage, setTopScorerMessage] = useState<MatchStatus | null>(null);
+  const [wcWinnerMessage, setWcWinnerMessage] = useState<MatchStatus | null>(null);
+  const [submittingTopScorer, setSubmittingTopScorer] = useState(false);
+  const [submittingWcWinner, setSubmittingWcWinner] = useState(false);
 
   const loadLeagueCounts = async () => {
     try {
@@ -184,6 +191,39 @@ export default function AdminPage() {
     }
   };
 
+  const handleSetSpecialResult = async (
+    type: "topscorer" | "wcwinner",
+    correctAnswer: string,
+    setSubmitting: (value: boolean) => void,
+    setMessage: (value: MatchStatus | null) => void
+  ) => {
+    if (!correctAnswer) return;
+
+    setSubmitting(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/special-result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, correctAnswer, adminKey }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage({ type: "error", message: data.error ?? "Failed to set result" });
+        return;
+      }
+
+      setMessage({ type: "success", message: `✅ Scored ${data.updated} prediction${data.updated === 1 ? "" : "s"}` });
+    } catch {
+      setMessage({ type: "error", message: "Failed to set result" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const inputStyle = {
     background: "#003B2B",
     color: "#FFFFFF",
@@ -251,6 +291,68 @@ export default function AdminPage() {
             ))}
           </ul>
         )}
+      </div>
+
+      <div style={{ border: "1px solid #00573F", background: "#002820", padding: 12, marginBottom: 12, borderRadius: 8 }}>
+        <h2 style={{ color: "#FFD700", marginTop: 0 }}>Set Special Results</h2>
+
+        <div style={{ marginBottom: 12 }}>
+          <h3 style={{ marginBottom: 4 }}>Golden Boot Winner</h3>
+          <select
+            value={topScorerWinner}
+            onChange={(e) => setTopScorerWinner(e.target.value)}
+            style={{ ...inputStyle, marginRight: 8 }}
+          >
+            <option value="">Select player...</option>
+            {TOP_SCORER_OPTIONS.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.flag} {player.name} ({player.team})
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() =>
+              handleSetSpecialResult("topscorer", topScorerWinner, setSubmittingTopScorer, setTopScorerMessage)
+            }
+            disabled={!topScorerWinner || submittingTopScorer}
+            style={buttonStyle}
+          >
+            {submittingTopScorer ? "Saving..." : "Submit"}
+          </button>
+          {topScorerMessage && (
+            <p style={{ color: topScorerMessage.type === "success" ? "#00A651" : "#ff6b6b" }}>
+              {topScorerMessage.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: 4 }}>World Cup Winner</h3>
+          <select
+            value={wcWinner}
+            onChange={(e) => setWcWinner(e.target.value)}
+            style={{ ...inputStyle, marginRight: 8 }}
+          >
+            <option value="">Select team...</option>
+            {ALL_WC_TEAMS.map((team) => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => handleSetSpecialResult("wcwinner", wcWinner, setSubmittingWcWinner, setWcWinnerMessage)}
+            disabled={!wcWinner || submittingWcWinner}
+            style={buttonStyle}
+          >
+            {submittingWcWinner ? "Saving..." : "Submit"}
+          </button>
+          {wcWinnerMessage && (
+            <p style={{ color: wcWinnerMessage.type === "success" ? "#00A651" : "#ff6b6b" }}>
+              {wcWinnerMessage.message}
+            </p>
+          )}
+        </div>
       </div>
 
       {matches.map((match) => {

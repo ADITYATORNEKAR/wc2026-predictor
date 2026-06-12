@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Match, Prediction } from "@/lib/types";
+import { Match, Prediction, SpecialPrediction } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
 import { getFlag, FLAG_MAP } from "@/lib/flags";
 import { getPredictionDisplay } from "@/lib/scoring";
+import { FIFA_RANKINGS } from "@/lib/rankings";
+import { TOP_SCORER_OPTIONS } from "@/lib/special-picks";
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
 const USERNAME_STORAGE_KEY = "wc2026_username";
@@ -30,6 +32,16 @@ function formatMatchDate(isoDate: string): string {
   });
 }
 
+function specialPointsBadge(points: number | undefined, possiblePoints: number) {
+  if (points === undefined) {
+    return <span className="rounded-full bg-gray-600 px-2 py-0.5 text-xs font-semibold text-gray-200">⏳ Pending</span>;
+  }
+  if (points === possiblePoints) {
+    return <span className="rounded-full bg-[#00A651] px-2 py-0.5 text-xs font-semibold text-white">✅ {points} pts</span>;
+  }
+  return <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">❌ 0 pts</span>;
+}
+
 function pointsBadge(points: number | undefined, hasResult: boolean, hasPrediction: boolean) {
   if (!hasPrediction) {
     return <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs font-semibold text-gray-300">—</span>;
@@ -49,6 +61,7 @@ export default function MyPredictionsPage() {
   const [userName, setUserName] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [specialPredictions, setSpecialPredictions] = useState<SpecialPrediction[]>([]);
   const [liveMatches, setLiveMatches] = useState<MappedMatch[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [ready, setReady] = useState(false);
@@ -89,6 +102,11 @@ export default function MyPredictionsPage() {
       .then((res) => res.json())
       .then((data) => setLiveMatches(data.matches ?? []))
       .catch(() => setLiveMatches([]));
+
+    fetch(`/api/special-predictions?userName=${encodeURIComponent(storedUserName)}`)
+      .then((res) => res.json())
+      .then(setSpecialPredictions)
+      .catch(() => setSpecialPredictions([]));
   }, [router]);
 
   const userPredictions = useMemo(() => {
@@ -154,14 +172,18 @@ export default function MyPredictionsPage() {
 
     const notPredicted = enrichedMatches.filter((m) => !m.prediction).length;
 
+    const bonusPoints = specialPredictions.reduce((sum, p) => sum + (p.points ?? 0), 0);
+
     return {
-      totalPoints,
+      matchPoints: totalPoints,
+      totalPoints: totalPoints + bonusPoints,
+      bonusPoints,
       correct,
       wrong,
       pending,
       notPredicted,
     };
-  }, [enrichedMatches, userPredictions]);
+  }, [enrichedMatches, userPredictions, specialPredictions]);
 
   const sorted = useMemo(() => {
     return [...enrichedMatches].sort((a, b) => {
@@ -223,6 +245,9 @@ export default function MyPredictionsPage() {
             <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
               <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Total Points</div>
               <div className="mt-1 text-4xl font-bold text-[#FFD700]">{stats.totalPoints}</div>
+              <div className="mt-1 text-xs text-[#94a3b8]">
+                Match points: {stats.matchPoints} | Bonus points: {stats.bonusPoints} | Total: {stats.totalPoints}
+              </div>
             </div>
             <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
               <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Correct</div>
@@ -326,6 +351,66 @@ export default function MyPredictionsPage() {
         </table>
       </div>
       )}
+
+      <div className="mt-8">
+        <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
+          Bonus Picks
+        </h2>
+
+        {specialPredictions.length === 0 ? (
+          <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center text-sm text-[#94a3b8]">
+            No bonus picks yet.{" "}
+            <Link href="/special-picks" className="font-semibold text-[#00A651] transition hover:text-[#00A651]/80">
+              Make your bonus picks →
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {(() => {
+              const topScorer = specialPredictions.find((p) => p.type === "topscorer");
+              const wcWinner = specialPredictions.find((p) => p.type === "wcwinner");
+              const topScorerPlayer = topScorer
+                ? TOP_SCORER_OPTIONS.find((player) => player.id === topScorer.pick)
+                : undefined;
+
+              return (
+                <>
+                  <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
+                    <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🥅 Golden Boot</div>
+                    {topScorer && topScorerPlayer ? (
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-white">
+                          {topScorerPlayer.flag} {topScorerPlayer.name}
+                        </span>
+                        {specialPointsBadge(topScorer.points, 30)}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-[#94a3b8]">Not picked yet</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
+                    <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🏆 World Cup Winner</div>
+                    {wcWinner ? (
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-white">
+                          {getFlag(wcWinner.pick)} {wcWinner.pick}{" "}
+                          <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
+                            #{FIFA_RANKINGS[wcWinner.pick] ?? "-"}
+                          </span>
+                        </span>
+                        {specialPointsBadge(wcWinner.points, 50)}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-[#94a3b8]">Not picked yet</p>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

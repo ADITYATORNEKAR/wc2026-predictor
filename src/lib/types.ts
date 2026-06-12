@@ -27,3 +27,15 @@ export interface User {
   totalPoints: number;
   predictions: Prediction[];
 }
+
+export type SpecialPredictionType = "topscorer" | "wcwinner";
+
+export interface SpecialPrediction {
+  id: string;
+  userName: string;
+  userEmail: string;
+  type: SpecialPredictionType;
+  pick: string;
+  points?: number;
+  submittedAt: string;
+}

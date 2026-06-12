@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Match } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
 import { getFlag } from "@/lib/flags";
+import { FIFA_RANKINGS } from "@/lib/rankings";
 
 const POLL_INTERVAL_MS = 60000;
 const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -176,6 +177,7 @@ export default function StandingsPage() {
                 <tr className="border-b border-[#00573F] text-[#94a3b8]">
                   <th className="px-2 py-1 text-left">#</th>
                   <th className="px-2 py-1 text-left">Team</th>
+                  <th className="px-1 py-1 text-center">FIFA</th>
                   <th className="px-1 py-1 text-center">P</th>
                   <th className="px-1 py-1 text-center">W</th>
                   <th className="px-1 py-1 text-center">D</th>
@@ -210,6 +212,9 @@ export default function StandingsPage() {
                             QUALIFIED ✓
                           </span>
                         )}
+                      </td>
+                      <td className="px-1 py-1.5 text-center text-[#94a3b8]">
+                        {FIFA_RANKINGS[team.team] ? `#${FIFA_RANKINGS[team.team]}` : "-"}
                       </td>
                       <td className="px-1 py-1.5 text-center">{team.played}</td>
                       <td className="px-1 py-1.5 text-center">{team.wins}</td>
