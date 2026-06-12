@@ -1,4 +1,4 @@
-import { TEAM_FLAG_CODES } from "@/lib/flags";
+import { TEAM_FLAG_CODES, getFlagCdnWidth } from "@/lib/flags";
 
 interface TeamFlagProps {
   team: string;
@@ -12,7 +12,7 @@ export default function TeamFlag({ team, size = 20, className }: TeamFlagProps) 
 
   return (
     <img
-      src={`https://flagcdn.com/w${size}/${code}.png`}
+      src={`https://flagcdn.com/w${getFlagCdnWidth(size)}/${code}.png`}
       alt={`${team} flag`}
       width={size}
       height={Math.round(size * 0.75)}

@@ -205,7 +205,7 @@ export default function SpecialPicksPage() {
                         : "border-[#00573F] bg-[#002820] hover:border-[#00A651]"
                     }`}
                   >
-                    <TeamFlag team={team} size={32} />
+                    <TeamFlag team={team} size={24} />
                     <span className="text-xs font-semibold text-white">{team}</span>
                     <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
                       #{FIFA_RANKINGS[team] ?? "-"}

@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
                       <div className="flex items-center justify-between text-sm text-white">
                         <span className="flex items-center gap-2">
                           <span className="w-6 text-center font-bold text-[#FFD700]">{index + 1}</span>
-                          <TeamFlag team={entry.team} size={24} />
+                          <TeamFlag team={entry.team} size={20} />
                           <span className="font-semibold">{entry.team}</span>
                           <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
                             #{FIFA_RANKINGS[entry.team] ?? "-"}
@@ -297,7 +297,7 @@ export default function AnalyticsPage() {
                 const pct = topScorerStats.total > 0 ? Math.round((entry.count / topScorerStats.total) * 100) : 0;
                 return (
                   <div key={entry.player.id} className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-                    <div className="flex justify-center"><TeamFlag team={entry.player.team} size={32} /></div>
+                    <div className="flex justify-center"><TeamFlag team={entry.player.team} size={20} /></div>
                     <div className="mt-2 font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
                       {entry.player.name}
                     </div>

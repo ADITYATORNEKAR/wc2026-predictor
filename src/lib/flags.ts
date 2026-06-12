@@ -14,8 +14,14 @@ export const TEAM_FLAG_CODES: Record<string, string> = {
   'Curaçao': 'cw', 'New Zealand': 'nz', 'Jordan': 'jo',
 };
 
+const FLAGCDN_WIDTHS = [20, 40, 80, 160, 320, 640, 1280, 2560];
+
+export function getFlagCdnWidth(size: number): number {
+  return FLAGCDN_WIDTHS.find((w) => w >= size) ?? FLAGCDN_WIDTHS[FLAGCDN_WIDTHS.length - 1];
+}
+
 export function getFlagUrl(team: string, size: number = 20): string {
   const code = TEAM_FLAG_CODES[team];
   if (!code) return '';
-  return `https://flagcdn.com/w${size}/${code}.png`;
+  return `https://flagcdn.com/w${getFlagCdnWidth(size)}/${code}.png`;
 }
