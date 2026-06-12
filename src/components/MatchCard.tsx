@@ -2,6 +2,7 @@ import { Match, Prediction } from "@/lib/types";
 import { getFlag, FLAG_MAP } from "@/lib/flags";
 import { getPredictionDisplay } from "@/lib/scoring";
 import { FIFA_RANKINGS } from "@/lib/rankings";
+import { formatMatchDate } from "@/lib/dateUtils";
 
 function RankBadge({ team }: { team: string }) {
   const rank = FIFA_RANKINGS[team];
@@ -12,17 +13,6 @@ function RankBadge({ team }: { team: string }) {
       #{rank}
     </span>
   );
-}
-
-function formatMatchDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
 }
 
 function pointsBadgeClasses(points?: number): string {

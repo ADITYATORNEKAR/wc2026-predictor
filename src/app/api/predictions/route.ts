@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPredictions, upsertPrediction } from "@/lib/sheets";
 import { MATCHES } from "@/lib/matches";
 import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
+import { hasMatchStarted } from "@/lib/dateUtils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
     const resolvedUserName =
       typeof userName === "string" && userName.trim() !== "" ? userName.trim() : userEmail.split("@")[0];
 
+    if (!isValidPrediction(prediction)) {
+      return NextResponse.json(
+        { error: "prediction must be one of: home, draw, away" },
+        { status: 400 }
+      );
+    }
+
     if (typeof matchId !== "string" || matchId.trim() === "") {
       return NextResponse.json({ error: "matchId is required" }, { status: 400 });
     }
@@ -47,16 +55,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Match not found" }, { status: 400 });
     }
 
-    if (new Date(match.matchDate) <= new Date()) {
+    if (hasMatchStarted(match.matchDate)) {
       return NextResponse.json(
-        { error: "Predictions are closed — this match has already started" },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidPrediction(prediction)) {
-      return NextResponse.json(
-        { error: "prediction must be one of: home, draw, away" },
+        { error: "Predictions closed — match has already started" },
         { status: 400 }
       );
     }

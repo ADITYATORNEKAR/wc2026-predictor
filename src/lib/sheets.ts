@@ -2,8 +2,6 @@ import { google, sheets_v4 } from "googleapis";
 import { randomUUID } from "crypto";
 import { Prediction, SpecialPrediction, SpecialPredictionType } from "./types";
 import { calculatePoints, PredictionOutcome } from "./scoring";
-import { MATCHES } from "./matches";
-import { KNOCKOUT_MATCHES } from "./knockout-matches";
 
 const PREDICTIONS_RANGE = "Predictions!A2:F";
 const MATCHES_RANGE = "Matches!A2:H";
@@ -36,13 +34,6 @@ export function getSheetsClient(): sheets_v4.Sheets {
   });
 
   return google.sheets({ version: "v4", auth });
-}
-
-export class MatchStartedError extends Error {
-  constructor() {
-    super("Cannot edit prediction — match has already started");
-    this.name = "MatchStartedError";
-  }
 }
 
 function rowToPrediction(row: string[], rowIndex: number): Prediction {
@@ -82,12 +73,8 @@ export async function upsertPrediction(
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
 
-    const match = [...MATCHES, ...KNOCKOUT_MATCHES].find((m) => m.id === pred.matchId);
-
-    if (!match) {
-      throw new Error(`Match with id "${pred.matchId}" not found`);
-    }
-
+    // Read all existing predictions. PREDICTIONS_RANGE starts at row 2,
+    // so array index 0 corresponds to sheet row 2.
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: PREDICTIONS_RANGE,
@@ -99,8 +86,6 @@ export async function upsertPrediction(
     );
 
     if (rowIndex === -1) {
-      const id = randomUUID();
-
       await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: PREDICTIONS_RANGE,
@@ -108,11 +93,11 @@ export async function upsertPrediction(
         requestBody: {
           values: [
             [
-              id,
+              randomUUID(),
               pred.userName,
               pred.matchId,
               pred.prediction,
-              "",
+              "", // points — empty until result is set
               pred.submittedAt,
             ],
           ],
@@ -122,34 +107,25 @@ export async function upsertPrediction(
       return { action: "created" };
     }
 
-    if (new Date(match.matchDate) <= new Date()) {
-      throw new MatchStartedError();
-    }
-
     const sheetRow = rowIndex + 2;
 
-    await sheets.spreadsheets.values.batchUpdate({
+    await sheets.spreadsheets.values.update({
       spreadsheetId,
+      range: `Predictions!D${sheetRow}:F${sheetRow}`,
+      valueInputOption: "RAW",
       requestBody: {
-        valueInputOption: "RAW",
-        data: [
-          {
-            range: `Predictions!D${sheetRow}`,
-            values: [[pred.prediction]],
-          },
-          {
-            range: `Predictions!F${sheetRow}`,
-            values: [[pred.submittedAt]],
-          },
+        values: [
+          [
+            pred.prediction, // column D — updated pick
+            "", // column E — clear points, pick has changed
+            pred.submittedAt, // column F — updated timestamp
+          ],
         ],
       },
     });
 
     return { action: "updated" };
   } catch (error) {
-    if (error instanceof MatchStartedError) {
-      throw error;
-    }
     throw new Error(
       `Failed to save prediction: ${error instanceof Error ? error.message : String(error)}`
     );

@@ -5,6 +5,7 @@ import { Match, Stage } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
 import { getFlag } from "@/lib/flags";
 import { FIFA_RANKINGS } from "@/lib/rankings";
+import { formatMatchDate } from "@/lib/dateUtils";
 
 const PREDICTION_WINDOW_HOURS = 48;
 
@@ -26,17 +27,6 @@ const STAGE_LABELS: Record<Stage, string> = {
   "3rd": "3rd Place",
   Final: "Final",
 };
-
-function formatMatchDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
-}
 
 function TeamRow({ name, placeholder }: { name: string; placeholder?: string }) {
   if (!name) {

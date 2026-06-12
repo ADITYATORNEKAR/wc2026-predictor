@@ -9,6 +9,7 @@ import { getFlag, FLAG_MAP } from "@/lib/flags";
 import { getPredictionDisplay } from "@/lib/scoring";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS } from "@/lib/special-picks";
+import { formatMatchDateShort, hasMatchStarted } from "@/lib/dateUtils";
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
 const USERNAME_STORAGE_KEY = "wc2026_username";
@@ -19,17 +20,6 @@ type Tab = (typeof TABS)[number];
 interface Result {
   homeScore: number;
   awayScore: number;
-}
-
-function formatMatchDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
 }
 
 function specialPointsBadge(points: number | undefined, possiblePoints: number) {
@@ -291,7 +281,7 @@ export default function MyPredictionsPage() {
               <th className="px-3 py-2">My Pick</th>
               <th className="px-3 py-2">Result</th>
               <th className="px-3 py-2">Points</th>
-              {activeTab === "Not Predicted" && <th className="px-3 py-2"></th>}
+              <th className="px-3 py-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -313,7 +303,7 @@ export default function MyPredictionsPage() {
                     </span>
                   </div>
                 </td>
-                <td className="px-3 py-2 text-xs text-[#94a3b8]">{formatMatchDate(match.matchDate)}</td>
+                <td className="px-3 py-2 text-xs text-[#94a3b8]">{formatMatchDateShort(match.matchDate)}</td>
                 <td className="px-3 py-2">
                   {prediction ? (
                     getPredictionDisplay(prediction.prediction, match, FLAG_MAP)
@@ -331,18 +321,25 @@ export default function MyPredictionsPage() {
                   )}
                 </td>
                 <td className="px-3 py-2">{pointsBadge(prediction?.points, !!result, !!prediction)}</td>
-                {activeTab === "Not Predicted" && (
-                  <td className="px-3 py-2">
-                    <Link href="/predict-groups" className="text-sm font-semibold text-[#00A651] transition hover:text-[#00A651]/80">
-                      Predict Now →
+                <td className="px-3 py-2">
+                  {status === "finished" ? null : hasMatchStarted(match.matchDate) ? (
+                    <span className="rounded-full bg-gray-600 px-2 py-0.5 text-xs font-semibold text-white">
+                      🔒 Locked
+                    </span>
+                  ) : (
+                    <Link
+                      href={match.stage === "Group" ? `/predict-groups#group-${match.group}` : "/predict-knockouts"}
+                      className="text-sm font-semibold text-[#00A651] transition hover:text-[#00A651]/80"
+                    >
+                      ✏️ Edit
                     </Link>
-                  </td>
-                )}
+                  )}
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-[#94a3b8]">
+                <td colSpan={6} className="px-3 py-6 text-center text-[#94a3b8]">
                   No matches to show.
                 </td>
               </tr>

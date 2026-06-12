@@ -5,18 +5,12 @@ import { getFlag } from "@/lib/flags";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
 import { SpecialPrediction } from "@/lib/types";
+import { formatMatchDateShort } from "@/lib/dateUtils";
 
 const EMAIL_KEY = "wc2026_email";
 const USERNAME_KEY = "wc2026_username";
 
-function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+const formatTimestamp = formatMatchDateShort;
 
 export default function SpecialPicksPage() {
   const [userEmail, setUserEmail] = useState("");

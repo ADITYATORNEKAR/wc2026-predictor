@@ -8,6 +8,7 @@ import { PredictionOutcome, getPredictionDisplay } from "@/lib/scoring";
 import { FLAG_MAP, getFlag } from "@/lib/flags";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { MATCHES } from "@/lib/matches";
+import { hasMatchStarted, formatMatchDateShort } from "@/lib/dateUtils";
 
 function getOutcomeRank(outcome: PredictionOutcome, match: Match): number | undefined {
   if (outcome === "draw") return undefined;
@@ -63,10 +64,10 @@ export default function PredictGroupsPage() {
   const [userEmail, setUserEmail] = useState("");
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [allPredictions, setAllPredictions] = useState<Prediction[]>([]);
-  const [selections, setSelections] = useState<Record<string, PredictionOutcome>>({});
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
-  const [savedMatchId, setSavedMatchId] = useState<string | null>(null);
+  const [lockedMatchIds, setLockedMatchIds] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [predictionsLoading, setPredictionsLoading] = useState(true);
   const [predictionsError, setPredictionsError] = useState<string | null>(null);
@@ -99,10 +100,10 @@ export default function PredictGroupsPage() {
   }, []);
 
   useEffect(() => {
-    if (!savedMatchId) return;
-    const timer = setTimeout(() => setSavedMatchId(null), 2000);
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2500);
     return () => clearTimeout(timer);
-  }, [savedMatchId]);
+  }, [toast]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -169,11 +170,6 @@ export default function PredictGroupsPage() {
     return map;
   }, [allPredictions]);
 
-  const getSelection = (matchId: string): PredictionOutcome | undefined => {
-    if (selections[matchId]) return selections[matchId];
-    return userPredictions.get(matchId)?.prediction;
-  };
-
   const dismissRules = () => {
     localStorage.setItem(RULES_DISMISSED_KEY, "true");
     setShowRules(false);
@@ -185,9 +181,7 @@ export default function PredictGroupsPage() {
   };
 
   const handleSelect = async (matchId: string, outcome: PredictionOutcome) => {
-    setSelections((prev) => ({ ...prev, [matchId]: outcome }));
     setErrors((prev) => ({ ...prev, [matchId]: "" }));
-    setSavedMatchId(null);
     setSavingMatchId(matchId);
 
     try {
@@ -205,17 +199,39 @@ export default function PredictGroupsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setErrors((prev) => ({ ...prev, [matchId]: data.error ?? "Failed to save prediction" }));
+        if (typeof data.error === "string" && data.error.toLowerCase().includes("started")) {
+          setToast("🔒 Predictions closed for this match");
+          setLockedMatchIds((prev) => new Set(prev).add(matchId));
+
+          const refreshed = await fetch(`/api/predictions?userName=${encodeURIComponent(userName)}`);
+          setPredictions(await refreshed.json());
+        } else {
+          setErrors((prev) => ({ ...prev, [matchId]: data.error ?? "Failed to save prediction" }));
+        }
         return;
       }
 
-      const refreshed = await fetch(`/api/predictions?userName=${encodeURIComponent(userName)}`);
-      setPredictions(await refreshed.json());
+      const submittedAt = new Date().toISOString();
+      const existing = userPredictions.get(matchId);
+      const updatedPrediction: Prediction = {
+        id: existing?.id ?? matchId,
+        userName,
+        matchId,
+        prediction: outcome,
+        submittedAt,
+      };
 
-      const refreshedAll = await fetch("/api/predictions");
-      setAllPredictions(await refreshedAll.json());
+      setPredictions((prev) => [
+        ...prev.filter((p) => !(p.userName === userName && p.matchId === matchId)),
+        updatedPrediction,
+      ]);
 
-      setSavedMatchId(matchId);
+      setAllPredictions((prev) => [
+        ...prev.filter((p) => !(p.userName === userName && p.matchId === matchId)),
+        updatedPrediction,
+      ]);
+
+      setToast(data.action === "updated" ? "✏️ Pick changed!" : "⚽ Pick saved!");
     } catch {
       setErrors((prev) => ({ ...prev, [matchId]: "Failed to save prediction" }));
     } finally {
@@ -304,11 +320,10 @@ export default function PredictGroupsPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {groupMatches.map((match) => {
-                const isPast = new Date(match.matchDate) < new Date();
-                const selection = getSelection(match.id);
+                const isPast = hasMatchStarted(match.matchDate) || lockedMatchIds.has(match.id);
                 const existingPrediction = userPredictions.get(match.id);
+                const selection = existingPrediction?.prediction;
                 const isSaving = savingMatchId === match.id;
-                const justSaved = savedMatchId === match.id;
 
                 return (
                   <div key={match.id} className="flex flex-col gap-3">
@@ -352,9 +367,9 @@ export default function PredictGroupsPage() {
                             })}
                           </div>
 
-                          {existingPrediction && (
+                          {existingPrediction?.submittedAt && (
                             <p className="mt-2 text-center text-xs text-[#94a3b8]">
-                              {justSaved ? "✓ Updated" : "✏️ Saved — click to change"}
+                              Last saved: {formatMatchDateShort(existingPrediction.submittedAt)}
                             </p>
                           )}
 
@@ -379,6 +394,12 @@ export default function PredictGroupsPage() {
           {index < groupedMatches.length - 1 && <hr className="my-8 border-t border-[#00A651]/30" />}
         </div>
       ))}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#00A651] px-5 py-2 text-sm font-semibold text-white shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
