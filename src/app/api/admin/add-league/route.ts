@@ -3,26 +3,16 @@ import { getSheetsClient, getSheetId } from "@/lib/sheets";
 
 const LEAGUES_RANGE = "Leagues!A2:B";
 
-const DEFAULT_LEAGUES = [
-  "ED&A Team Vijay",
-  "ED&A Team Bryce",
-  "ED&A Team Paul",
-  "ED&A Team Christian",
-  "ED&A Team Melissa",
-  "ED&A Team Rich",
-  "ED&A Team Antonio",
-  "ED&A Team Kristen",
-  "ED&A Team Taylor",
-  "ED&A Team Kyle",
-  "Team ED&A",
-  "Team CFG",
-];
-
 export async function GET(request: NextRequest) {
   const adminKey = request.nextUrl.searchParams.get("adminKey");
+  const name = request.nextUrl.searchParams.get("name");
 
   if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
     return NextResponse.json({ error: "Invalid admin key" }, { status: 401 });
+  }
+
+  if (!name || name.trim() === "") {
+    return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
 
   try {
@@ -35,24 +25,25 @@ export async function GET(request: NextRequest) {
     });
 
     const rows = response.data.values ?? [];
+    const exists = rows.some((row) => row[0] === name);
 
-    if (rows.length > 0) {
-      return NextResponse.json({ skipped: true, message: "Leagues sheet already seeded" });
+    if (exists) {
+      return NextResponse.json({ skipped: true });
     }
 
-    const values = DEFAULT_LEAGUES.map((leagueName) => [leagueName, new Date().toISOString()]);
-
-    await sheets.spreadsheets.values.update({
+    await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `Leagues!A2:B${values.length + 1}`,
+      range: LEAGUES_RANGE,
       valueInputOption: "RAW",
-      requestBody: { values },
+      requestBody: {
+        values: [[name, new Date().toISOString()]],
+      },
     });
 
-    return NextResponse.json({ seeded: values.length });
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to seed leagues" },
+      { error: error instanceof Error ? error.message : "Failed to add league" },
       { status: 500 }
     );
   }

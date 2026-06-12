@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MatchCard from "@/components/MatchCard";
 import { Match, Prediction } from "@/lib/types";
-import { PredictionOutcome, getPredictionDisplay } from "@/lib/scoring";
-import { FLAG_MAP, getFlag } from "@/lib/flags";
+import { PredictionOutcome } from "@/lib/scoring";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { MATCHES } from "@/lib/matches";
 import { hasMatchStarted, formatMatchDateShort } from "@/lib/dateUtils";
+import TeamFlag from "@/components/TeamFlag";
+import PredictionDisplay from "@/components/PredictionDisplay";
 
 function getOutcomeRank(outcome: PredictionOutcome, match: Match): number | undefined {
   if (outcome === "draw") return undefined;
@@ -47,9 +48,9 @@ function CrowdBar({ match, counts, selection }: { match: Match; counts: PickCoun
         <div className={`bg-[#3b82f6] ${segmentClasses("away")}`} style={{ width: `${awayPct}%` }} />
       </div>
       <div className="mt-1 flex items-center justify-between text-[10px] text-[#94a3b8]">
-        <span>{getFlag(match.homeTeam)} {homePct}%</span>
+        <span className="inline-flex items-center gap-1"><TeamFlag team={match.homeTeam} size={16} /> {homePct}%</span>
         <span>{drawPct}% 🤝</span>
-        <span>{awayPct}% {getFlag(match.awayTeam)}</span>
+        <span className="inline-flex items-center gap-1">{awayPct}% <TeamFlag team={match.awayTeam} size={16} /></span>
       </div>
     </div>
   );
@@ -333,7 +334,7 @@ export default function PredictGroupsPage() {
                       {isPast ? (
                         existingPrediction ? (
                           <p className="text-center text-[#94a3b8]">
-                            Your pick: {getPredictionDisplay(existingPrediction.prediction, match, FLAG_MAP)}
+                            Your pick: <PredictionDisplay prediction={existingPrediction.prediction} match={match} size={20} />
                           </p>
                         ) : (
                           <p className="rounded-md bg-red-600/20 px-3 py-2 text-center text-sm font-semibold text-red-400">
@@ -358,7 +359,7 @@ export default function PredictGroupsPage() {
                                   }`}
                                 >
                                   {isSaving && isSelected ? "⏳ " : ""}
-                                  {getPredictionDisplay(outcome, match, FLAG_MAP)}
+                                  <PredictionDisplay prediction={outcome} match={match} size={24} />
                                   {rank !== undefined && (
                                     <span className="ml-1 text-xs font-normal text-white/60">#{rank}</span>
                                   )}

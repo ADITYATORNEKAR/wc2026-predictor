@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getFlag } from "@/lib/flags";
+import TeamFlag from "@/components/TeamFlag";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
 import { SpecialPrediction } from "@/lib/types";
@@ -23,6 +23,7 @@ export default function SpecialPicksPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [topScorerLocked, setTopScorerLocked] = useState(false);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_KEY) ?? "";
@@ -41,6 +42,11 @@ export default function SpecialPicksPage() {
       })
       .catch(() => setExistingPicks([]))
       .finally(() => setLoading(false));
+
+    fetch("/api/special-predictions/status")
+      .then((res) => res.json())
+      .then((data) => setTopScorerLocked(!!data.topscorer_locked))
+      .catch(() => setTopScorerLocked(false));
   }, []);
 
   const sortedTeams = useMemo(() => {
@@ -63,7 +69,7 @@ export default function SpecialPicksPage() {
     try {
       const requests: Promise<Response>[] = [];
 
-      if (topScorerPick) {
+      if (topScorerPick && !topScorerLocked) {
         requests.push(
           fetch("/api/special-predictions", {
             method: "POST",
@@ -86,7 +92,9 @@ export default function SpecialPicksPage() {
       const responses = await Promise.all(requests);
 
       if (responses.some((res) => !res.ok)) {
-        setSaveMessage("Failed to save one or more picks");
+        const failed = responses.find((res) => !res.ok);
+        const data = failed ? await failed.json().catch(() => null) : null;
+        setSaveMessage(data?.error ?? "Failed to save one or more picks");
         return;
       }
 
@@ -119,6 +127,12 @@ export default function SpecialPicksPage() {
             </h2>
             <p className="mb-4 text-sm text-[#94a3b8]">🎯 30 pts if correct</p>
 
+            {topScorerLocked && (
+              <div className="mb-4 rounded-md border border-red-500 bg-red-600/20 px-3 py-2 text-center text-sm font-semibold text-red-400">
+                🔒 Top Scorer predictions are locked — Round of 32 is set!
+              </div>
+            )}
+
             <input
               type="text"
               value={playerSearch}
@@ -134,7 +148,8 @@ export default function SpecialPicksPage() {
                   <button
                     key={player.id}
                     onClick={() => setTopScorerPick(player.id)}
-                    className={`relative rounded-lg border p-3 text-center transition ${
+                    disabled={topScorerLocked}
+                    className={`relative rounded-lg border p-3 text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${
                       isSelected
                         ? "border-[#FFD700] bg-[#00A651]/20"
                         : "border-[#00573F] bg-[#002820] hover:border-[#00A651]"
@@ -143,7 +158,7 @@ export default function SpecialPicksPage() {
                     {isSelected && (
                       <span className="absolute right-2 top-2 text-base text-[#FFD700]">✓</span>
                     )}
-                    <div className="text-4xl">{player.flag}</div>
+                    <div className="flex justify-center"><TeamFlag team={player.team} size={32} /></div>
                     <div className="mt-1 font-[family-name:var(--font-heading)] text-sm font-bold tracking-wide text-white">
                       {player.name}
                     </div>
@@ -190,7 +205,7 @@ export default function SpecialPicksPage() {
                         : "border-[#00573F] bg-[#002820] hover:border-[#00A651]"
                     }`}
                   >
-                    <span className="text-2xl">{getFlag(team)}</span>
+                    <TeamFlag team={team} size={32} />
                     <span className="text-xs font-semibold text-white">{team}</span>
                     <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
                       #{FIFA_RANKINGS[team] ?? "-"}
@@ -221,8 +236,8 @@ export default function SpecialPicksPage() {
                 {wcWinnerEntry && (
                   <li>
                     🏆 World Cup Winner:{" "}
-                    <span className="font-semibold">
-                      {getFlag(wcWinnerEntry.pick)} {wcWinnerEntry.pick}
+                    <span className="inline-flex items-center gap-1 font-semibold">
+                      <TeamFlag team={wcWinnerEntry.pick} size={20} /> {wcWinnerEntry.pick}
                     </span>{" "}
                     <span className="text-[#94a3b8]">
                       (saved {formatTimestamp(wcWinnerEntry.submittedAt)})

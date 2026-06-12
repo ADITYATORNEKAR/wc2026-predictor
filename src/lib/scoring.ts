@@ -1,5 +1,3 @@
-import { Match } from "./types";
-
 export type PredictionOutcome = "home" | "draw" | "away";
 
 export function getResult(homeScore: number, awayScore: number): PredictionOutcome {
@@ -28,20 +26,3 @@ export const OUTCOME_DISPLAY: Record<PredictionOutcome, string> = {
   draw: "🤝 Draw",
   away: "✈️ Away Win",
 };
-
-export function getPredictionDisplay(
-  prediction: PredictionOutcome,
-  match: Match,
-  flagMap: Record<string, string>
-): string {
-  if (prediction === "draw") return "🤝 Draw";
-
-  const team = prediction === "home" ? match.homeTeam : match.awayTeam;
-  if (!team) {
-    const placeholder = prediction === "home" ? match.homeTeamPlaceholder : match.awayTeamPlaceholder;
-    return placeholder ?? "TBD";
-  }
-
-  const flag = flagMap[team] ?? "🏳️";
-  return `${flag} ${team}`;
-}

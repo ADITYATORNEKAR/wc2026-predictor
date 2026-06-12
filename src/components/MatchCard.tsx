@@ -1,8 +1,8 @@
 import { Match, Prediction } from "@/lib/types";
-import { getFlag, FLAG_MAP } from "@/lib/flags";
-import { getPredictionDisplay } from "@/lib/scoring";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { formatMatchDate } from "@/lib/dateUtils";
+import TeamFlag from "./TeamFlag";
+import PredictionDisplay from "./PredictionDisplay";
 
 function RankBadge({ team }: { team: string }) {
   const rank = FIFA_RANKINGS[team];
@@ -80,7 +80,7 @@ export default function MatchCard({
                 {match.homeTeam}
               </span>
               <RankBadge team={match.homeTeam} />
-              <span className="text-2xl">{getFlag(match.homeTeam)}</span>
+              <TeamFlag team={match.homeTeam} size={20} />
             </>
           ) : (
             <span className="text-sm italic text-[#94a3b8]">{match.homeTeamPlaceholder ?? "TBD"}</span>
@@ -90,7 +90,7 @@ export default function MatchCard({
         <div className="flex flex-1 items-center gap-2">
           {match.awayTeam ? (
             <>
-              <span className="text-2xl">{getFlag(match.awayTeam)}</span>
+              <TeamFlag team={match.awayTeam} size={20} />
               <span className="font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
                 {match.awayTeam}
               </span>
@@ -127,7 +127,7 @@ export default function MatchCard({
 
       {userPrediction && (
         <div className="mt-3 flex items-center justify-center gap-2 text-sm text-white">
-          <span>{getPredictionDisplay(userPrediction.prediction, match, FLAG_MAP)}</span>
+          <PredictionDisplay prediction={userPrediction.prediction} match={match} size={20} />
           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${pointsBadgeClasses(userPrediction.points)}`}>
             {pointsBadgeLabel(userPrediction.points)}
           </span>

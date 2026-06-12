@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Match, Prediction, SpecialPrediction } from "@/lib/types";
-import { getFlag } from "@/lib/flags";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
+import TeamFlag from "@/components/TeamFlag";
 
 const REFRESH_INTERVAL_MS = 60000;
 
@@ -193,8 +193,8 @@ export default function AnalyticsPage() {
               <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
                 <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🌍 Most Backed Country</div>
                 {wcWinnerStats.ranked.length > 0 ? (
-                  <div className="mt-1 text-2xl font-bold text-[#FFD700]">
-                    {getFlag(wcWinnerStats.ranked[0].team)} {wcWinnerStats.ranked[0].team} —{" "}
+                  <div className="mt-1 flex items-center justify-center gap-2 text-2xl font-bold text-[#FFD700]">
+                    <TeamFlag team={wcWinnerStats.ranked[0].team} size={24} /> {wcWinnerStats.ranked[0].team} —{" "}
                     {wcWinnerStats.total > 0 ? Math.round((wcWinnerStats.ranked[0].count / wcWinnerStats.total) * 100) : 0}% of
                     users
                   </div>
@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
                       <div className="flex items-center justify-between text-sm text-white">
                         <span className="flex items-center gap-2">
                           <span className="w-6 text-center font-bold text-[#FFD700]">{index + 1}</span>
-                          <span className="text-2xl">{getFlag(entry.team)}</span>
+                          <TeamFlag team={entry.team} size={24} />
                           <span className="font-semibold">{entry.team}</span>
                           <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
                             #{FIFA_RANKINGS[entry.team] ?? "-"}
@@ -297,7 +297,7 @@ export default function AnalyticsPage() {
                 const pct = topScorerStats.total > 0 ? Math.round((entry.count / topScorerStats.total) * 100) : 0;
                 return (
                   <div key={entry.player.id} className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-                    <div className="text-5xl">{entry.player.flag}</div>
+                    <div className="flex justify-center"><TeamFlag team={entry.player.team} size={32} /></div>
                     <div className="mt-2 font-[family-name:var(--font-heading)] text-lg font-bold tracking-wide text-white">
                       {entry.player.name}
                     </div>

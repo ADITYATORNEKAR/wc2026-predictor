@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Match, Prediction, SpecialPrediction } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { getFlag, FLAG_MAP } from "@/lib/flags";
-import { getPredictionDisplay } from "@/lib/scoring";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS } from "@/lib/special-picks";
 import { formatMatchDateShort, hasMatchStarted } from "@/lib/dateUtils";
+import TeamFlag from "@/components/TeamFlag";
+import PredictionDisplay from "@/components/PredictionDisplay";
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
 const USERNAME_STORAGE_KEY = "wc2026_username";
@@ -294,19 +294,31 @@ export default function MyPredictionsPage() {
                         LIVE
                       </span>
                     )}
-                    <span>
-                      {match.homeTeam ? `${getFlag(match.homeTeam)} ${match.homeTeam}` : (match.homeTeamPlaceholder ?? "TBD")}
+                    <span className="inline-flex items-center gap-1">
+                      {match.homeTeam ? (
+                        <>
+                          <TeamFlag team={match.homeTeam} size={20} /> {match.homeTeam}
+                        </>
+                      ) : (
+                        match.homeTeamPlaceholder ?? "TBD"
+                      )}
                     </span>
                     <span className="text-[#00A651]">vs</span>
-                    <span>
-                      {match.awayTeam ? `${getFlag(match.awayTeam)} ${match.awayTeam}` : (match.awayTeamPlaceholder ?? "TBD")}
+                    <span className="inline-flex items-center gap-1">
+                      {match.awayTeam ? (
+                        <>
+                          <TeamFlag team={match.awayTeam} size={20} /> {match.awayTeam}
+                        </>
+                      ) : (
+                        match.awayTeamPlaceholder ?? "TBD"
+                      )}
                     </span>
                   </div>
                 </td>
                 <td className="px-3 py-2 text-xs text-[#94a3b8]">{formatMatchDateShort(match.matchDate)}</td>
                 <td className="px-3 py-2">
                   {prediction ? (
-                    getPredictionDisplay(prediction.prediction, match, FLAG_MAP)
+                    <PredictionDisplay prediction={prediction.prediction} match={match} size={20} />
                   ) : (
                     <span className="text-gray-400">Not submitted</span>
                   )}
@@ -376,8 +388,8 @@ export default function MyPredictionsPage() {
                     <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🥅 Golden Boot</div>
                     {topScorer && topScorerPlayer ? (
                       <div className="mt-2 flex items-center justify-between">
-                        <span className="text-white">
-                          {topScorerPlayer.flag} {topScorerPlayer.name}
+                        <span className="inline-flex items-center gap-1 text-white">
+                          <TeamFlag team={topScorerPlayer.team} size={20} /> {topScorerPlayer.name}
                         </span>
                         {specialPointsBadge(topScorer.points, 30)}
                       </div>
@@ -390,8 +402,8 @@ export default function MyPredictionsPage() {
                     <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🏆 World Cup Winner</div>
                     {wcWinner ? (
                       <div className="mt-2 flex items-center justify-between">
-                        <span className="text-white">
-                          {getFlag(wcWinner.pick)} {wcWinner.pick}{" "}
+                        <span className="inline-flex items-center gap-1 text-white">
+                          <TeamFlag team={wcWinner.pick} size={20} /> {wcWinner.pick}{" "}
                           <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
                             #{FIFA_RANKINGS[wcWinner.pick] ?? "-"}
                           </span>

@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Match } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { getFlag } from "@/lib/flags";
 import { FIFA_RANKINGS } from "@/lib/rankings";
+import TeamFlag from "@/components/TeamFlag";
 
 const POLL_INTERVAL_MS = 60000;
 const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -205,7 +205,7 @@ export default function StandingsPage() {
                     <tr key={team.team} className={rowClasses}>
                       <td className="px-2 py-1.5">{position}</td>
                       <td className="px-2 py-1.5">
-                        <span className="mr-1">{getFlag(team.team)}</span>
+                        <span className="mr-1"><TeamFlag team={team.team} size={20} /></span>
                         {team.team}
                         {position <= 2 && isComplete && (
                           <span className="ml-2 rounded-full bg-[#00A651] px-1.5 py-0.5 text-[10px] font-bold text-white">

@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Match, Stage } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { getFlag } from "@/lib/flags";
 import { FIFA_RANKINGS } from "@/lib/rankings";
 import { formatMatchDate } from "@/lib/dateUtils";
+import TeamFlag from "@/components/TeamFlag";
 
 const PREDICTION_WINDOW_HOURS = 48;
 
@@ -40,7 +40,7 @@ function TeamRow({ name, placeholder }: { name: string; placeholder?: string }) 
   return (
     <span className="flex flex-col">
       <span className="flex items-center gap-2 font-semibold text-white">
-        <span className="text-xl">{getFlag(name)}</span>
+        <TeamFlag team={name} size={20} />
         {name}
       </span>
       {rank && <span className="ml-7 text-[10px] text-[#94a3b8]">FIFA #{rank}</span>}

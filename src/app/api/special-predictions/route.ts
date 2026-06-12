@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSpecialPredictions, upsertSpecialPrediction } from "@/lib/sheets";
+import { getConfig, getSpecialPredictions, upsertSpecialPrediction } from "@/lib/sheets";
 import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
 
 export async function GET(request: NextRequest) {
@@ -42,6 +42,16 @@ export async function POST(request: NextRequest) {
 
     if (type === "wcwinner" && !ALL_WC_TEAMS.includes(pick)) {
       return NextResponse.json({ error: "Invalid World Cup winner pick" }, { status: 400 });
+    }
+
+    if (type === "topscorer") {
+      const locked = await getConfig("topscorer_locked");
+      if (locked === "true") {
+        return NextResponse.json(
+          { error: "Top scorer predictions are now locked — Round of 32 is set!" },
+          { status: 423 }
+        );
+      }
     }
 
     const result = await upsertSpecialPrediction({ userName, userEmail, type, pick });

@@ -5,6 +5,7 @@ import { calculatePoints, PredictionOutcome } from "./scoring";
 
 const PREDICTIONS_RANGE = "Predictions!A2:F";
 const MATCHES_RANGE = "Matches!A2:H";
+const CONFIG_RANGE = "Config!A2:C";
 
 export function getSheetId(): string {
   const sheetId = process.env.GOOGLE_SHEETS_ID;
@@ -493,6 +494,67 @@ export async function setSpecialPredictionResult(
   } catch (error) {
     throw new Error(
       `Failed to set special prediction result for "${type}": ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+export async function getConfig(key: string): Promise<string | null> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: CONFIG_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    const row = rows.find((r) => r[0] === key);
+
+    return row?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setConfig(key: string, value: string): Promise<void> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: CONFIG_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    const rowIndex = rows.findIndex((r) => r[0] === key);
+
+    if (rowIndex === -1) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: CONFIG_RANGE,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[key, value, new Date().toISOString()]],
+        },
+      });
+      return;
+    }
+
+    const sheetRow = rowIndex + 2;
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `Config!B${sheetRow}:C${sheetRow}`,
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [[value, new Date().toISOString()]],
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to set config "${key}": ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

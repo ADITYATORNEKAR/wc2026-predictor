@@ -32,6 +32,9 @@ export default function AdminPage() {
   const [wcWinnerMessage, setWcWinnerMessage] = useState<MatchStatus | null>(null);
   const [submittingTopScorer, setSubmittingTopScorer] = useState(false);
   const [submittingWcWinner, setSubmittingWcWinner] = useState(false);
+  const [topScorerLocked, setTopScorerLocked] = useState(false);
+  const [lockMessage, setLockMessage] = useState<MatchStatus | null>(null);
+  const [togglingLock, setTogglingLock] = useState(false);
 
   const loadLeagueCounts = async () => {
     try {
@@ -65,7 +68,39 @@ export default function AdminPage() {
       .catch(() => setMatches([]));
 
     loadLeagueCounts();
+
+    fetch("/api/special-predictions/status")
+      .then((res) => res.json())
+      .then((data) => setTopScorerLocked(!!data.topscorer_locked))
+      .catch(() => setTopScorerLocked(false));
   }, [unlocked]);
+
+  const handleToggleTopScorerLock = async () => {
+    setTogglingLock(true);
+    setLockMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/lock-special", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "topscorer", locked: !topScorerLocked, adminKey }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setLockMessage({ type: "error", message: data.error ?? "Failed to update lock status" });
+        return;
+      }
+
+      setTopScorerLocked(!topScorerLocked);
+      setLockMessage({ type: "success", message: data.message });
+    } catch {
+      setLockMessage({ type: "error", message: "Failed to update lock status" });
+    } finally {
+      setTogglingLock(false);
+    }
+  };
 
   const handleSeedLeagues = async () => {
     setSeeding(true);
@@ -290,6 +325,28 @@ export default function AdminPage() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      <div style={{ border: "1px solid #00573F", background: "#002820", padding: 12, marginBottom: 12, borderRadius: 8 }}>
+        <h2 style={{ color: "#FFD700", marginTop: 0 }}>Lock Controls</h2>
+        <p style={{ marginBottom: 8 }}>
+          Top Scorer picks are currently{" "}
+          <strong style={{ color: topScorerLocked ? "#ff6b6b" : "#00A651" }}>
+            {topScorerLocked ? "LOCKED" : "UNLOCKED"}
+          </strong>
+        </p>
+        <button onClick={handleToggleTopScorerLock} disabled={togglingLock} style={buttonStyle}>
+          {togglingLock
+            ? "Saving..."
+            : topScorerLocked
+              ? "🔓 Unlock Top Scorer Picks"
+              : "🔒 Lock Top Scorer Picks"}
+        </button>
+        {lockMessage && (
+          <p style={{ color: lockMessage.type === "success" ? "#00A651" : "#ff6b6b" }}>
+            {lockMessage.message}
+          </p>
         )}
       </div>
 
