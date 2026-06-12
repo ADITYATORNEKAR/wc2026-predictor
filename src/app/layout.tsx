@@ -56,6 +56,9 @@ export default function RootLayout({
               <Link href="/standings" className="text-white transition hover:text-[#00A651]">
                 Standings
               </Link>
+              <Link href="/leagues" className="text-white transition hover:text-[#00A651]">
+                Leagues
+              </Link>
               <Link href="/bracket" className="text-white transition hover:text-[#00A651]">
                 Bracket
               </Link>

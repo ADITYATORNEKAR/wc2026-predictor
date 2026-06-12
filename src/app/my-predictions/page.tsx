@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Match, Prediction } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { getFlag } from "@/lib/flags";
-import { OUTCOME_DISPLAY } from "@/lib/scoring";
+import { getFlag, FLAG_MAP } from "@/lib/flags";
+import { getPredictionDisplay } from "@/lib/scoring";
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
 const USERNAME_STORAGE_KEY = "wc2026_username";
@@ -52,6 +52,8 @@ export default function MyPredictionsPage() {
   const [liveMatches, setLiveMatches] = useState<MappedMatch[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [ready, setReady] = useState(false);
+  const [predictionsLoading, setPredictionsLoading] = useState(true);
+  const [predictionsError, setPredictionsError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
@@ -71,10 +73,17 @@ export default function MyPredictionsPage() {
       .then(setMatches)
       .catch(() => setMatches([]));
 
-    fetch("/api/predictions")
+    fetch(`/api/predictions?userName=${encodeURIComponent(storedUserName)}`)
       .then((res) => res.json())
-      .then(setPredictions)
-      .catch(() => setPredictions([]));
+      .then((data) => {
+        setPredictions(data);
+        setPredictionsError(null);
+      })
+      .catch(() => {
+        setPredictions([]);
+        setPredictionsError("Could not load previous predictions — you can still submit new ones");
+      })
+      .finally(() => setPredictionsLoading(false));
 
     fetch("/api/livescores")
       .then((res) => res.json())
@@ -188,24 +197,44 @@ export default function MyPredictionsPage() {
         My Predictions
       </h1>
       <p className="mt-1 text-sm text-white">{userEmail}</p>
-      <p className="mt-2 text-sm text-[#94a3b8]">
-        {stats.correct} correct | {stats.wrong} wrong | {stats.pending} pending | {stats.notPredicted} not predicted
+      <p className="mt-2 text-lg text-white">
+        Welcome back, {userName}! Here are all your predictions.
       </p>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-          <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Total Points</div>
-          <div className="mt-1 text-4xl font-bold text-[#FFD700]">{stats.totalPoints}</div>
+      {predictionsError && (
+        <p className="mt-3 rounded-md bg-red-600/20 px-3 py-2 text-sm font-semibold text-red-400">
+          {predictionsError}
+        </p>
+      )}
+
+      {predictionsLoading ? (
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-lg border border-[#00573F] bg-[#002820]" />
+          ))}
         </div>
-        <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-          <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Correct</div>
-          <div className="mt-1 text-4xl font-bold text-[#00A651]">{stats.correct}</div>
-        </div>
-        <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
-          <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Pending</div>
-          <div className="mt-1 text-4xl font-bold text-[#94a3b8]">{stats.pending}</div>
-        </div>
-      </div>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-[#94a3b8]">
+            {stats.correct} correct | {stats.wrong} wrong | {stats.pending} pending | {stats.notPredicted} not predicted
+          </p>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+              <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Total Points</div>
+              <div className="mt-1 text-4xl font-bold text-[#FFD700]">{stats.totalPoints}</div>
+            </div>
+            <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+              <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Correct</div>
+              <div className="mt-1 text-4xl font-bold text-[#00A651]">{stats.correct}</div>
+            </div>
+            <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4 text-center">
+              <div className="text-xs uppercase tracking-wide text-[#94a3b8]">Pending</div>
+              <div className="mt-1 text-4xl font-bold text-[#94a3b8]">{stats.pending}</div>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="mt-8 mb-4 flex flex-wrap gap-2 border-b border-[#00573F] pb-2">
         {TABS.map((tab) => (
@@ -221,6 +250,13 @@ export default function MyPredictionsPage() {
         ))}
       </div>
 
+      {predictionsLoading ? (
+        <div className="mt-2 space-y-2">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-12 animate-pulse rounded-lg border border-[#00573F] bg-[#002820]/50" />
+          ))}
+        </div>
+      ) : (
       <div className="overflow-x-auto rounded-lg border border-[#00573F]">
         <table className="w-full text-sm text-white">
           <thead>
@@ -255,7 +291,7 @@ export default function MyPredictionsPage() {
                 <td className="px-3 py-2 text-xs text-[#94a3b8]">{formatMatchDate(match.matchDate)}</td>
                 <td className="px-3 py-2">
                   {prediction ? (
-                    OUTCOME_DISPLAY[prediction.prediction]
+                    getPredictionDisplay(prediction.prediction, match, FLAG_MAP)
                   ) : (
                     <span className="text-gray-400">Not submitted</span>
                   )}
@@ -289,6 +325,7 @@ export default function MyPredictionsPage() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

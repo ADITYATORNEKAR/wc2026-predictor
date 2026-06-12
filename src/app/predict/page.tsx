@@ -4,23 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MatchCard from "@/components/MatchCard";
 import { Match, Prediction } from "@/lib/types";
-import { PredictionOutcome, OUTCOME_DISPLAY } from "@/lib/scoring";
-import { getFlag } from "@/lib/flags";
+import { PredictionOutcome, getPredictionDisplay } from "@/lib/scoring";
+import { FLAG_MAP } from "@/lib/flags";
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
 const RULES_DISMISSED_KEY = "wc2026_rules_dismissed";
-
-function formatPick(outcome: PredictionOutcome, match: Match): string {
-  if (outcome === "draw") return "Draw";
-  if (outcome === "home") {
-    return match.homeTeam
-      ? `${getFlag(match.homeTeam)} ${match.homeTeam} Win`
-      : `${match.homeTeamPlaceholder ?? "Home"} Win`;
-  }
-  return match.awayTeam
-    ? `${getFlag(match.awayTeam)} ${match.awayTeam} Win`
-    : `${match.awayTeamPlaceholder ?? "Away"} Win`;
-}
 
 function getMatchdayLabel(match: Match): string {
   if (match.stage !== "Group") {
@@ -57,6 +45,8 @@ export default function PredictPage() {
   const [savedMatchId, setSavedMatchId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showRules, setShowRules] = useState(false);
+  const [predictionsLoading, setPredictionsLoading] = useState(true);
+  const [predictionsError, setPredictionsError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
@@ -69,10 +59,19 @@ export default function PredictPage() {
       .then(setMatches)
       .catch(() => setMatches([]));
 
-    fetch("/api/predictions")
+    const resolvedUserName = storedEmail ? storedEmail.split("@")[0] : "";
+
+    fetch(`/api/predictions?userName=${encodeURIComponent(resolvedUserName)}`)
       .then((res) => res.json())
-      .then(setPredictions)
-      .catch(() => setPredictions([]));
+      .then((data) => {
+        setPredictions(data);
+        setPredictionsError(null);
+      })
+      .catch(() => {
+        setPredictions([]);
+        setPredictionsError("Could not load previous predictions — you can still submit new ones");
+      })
+      .finally(() => setPredictionsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -141,7 +140,7 @@ export default function PredictPage() {
         return;
       }
 
-      const refreshed = await fetch("/api/predictions");
+      const refreshed = await fetch(`/api/predictions?userName=${encodeURIComponent(userName)}`);
       setPredictions(await refreshed.json());
       setSavedMatchId(matchId);
     } catch {
@@ -161,6 +160,16 @@ export default function PredictPage() {
       <Link href="/my-predictions" className="mb-6 inline-block text-sm text-[#00A651] transition hover:text-[#00A651]/80">
         View all my predictions →
       </Link>
+
+      {predictionsLoading && (
+        <p className="mb-6 text-sm text-[#94a3b8]">⏳ Loading your predictions...</p>
+      )}
+
+      {predictionsError && (
+        <p className="mb-6 rounded-md bg-red-600/20 px-3 py-2 text-sm font-semibold text-red-400">
+          {predictionsError}
+        </p>
+      )}
 
       {showRules && (
         <div className="mb-6 rounded-lg border border-[#00A651] bg-[#002820] p-4">
@@ -211,7 +220,7 @@ export default function PredictPage() {
                     {isPast ? (
                       existingPrediction ? (
                         <p className="text-center text-[#94a3b8]">
-                          Your pick: {OUTCOME_DISPLAY[existingPrediction.prediction]}
+                          Your pick: {getPredictionDisplay(existingPrediction.prediction, match, FLAG_MAP)}
                         </p>
                       ) : (
                         <p className="rounded-md bg-red-600/20 px-3 py-2 text-center text-sm font-semibold text-red-400">
@@ -235,7 +244,7 @@ export default function PredictPage() {
                                 }`}
                               >
                                 {isSaving && isSelected ? "⏳ " : ""}
-                                {outcome === "draw" ? "Draw" : formatPick(outcome, match)}
+                                {getPredictionDisplay(outcome, match, FLAG_MAP)}
                               </button>
                             );
                           })}

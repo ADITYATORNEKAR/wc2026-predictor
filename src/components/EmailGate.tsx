@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LeagueSelector from "./LeagueSelector";
 
 const EMAIL_KEY = "wc2026_email";
 const USERNAME_KEY = "wc2026_username";
+const LEAGUE_KEY = "wc2026_league";
 const ALLOWED_DOMAIN = "@citizensbank.com";
 
 export default function EmailGate({ children }: { children: React.ReactNode }) {
@@ -11,10 +13,12 @@ export default function EmailGate({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [hasLeague, setHasLeague] = useState(false);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_KEY);
     if (storedEmail) setUnlocked(true);
+    setHasLeague(!!localStorage.getItem(LEAGUE_KEY));
     setChecked(true);
   }, []);
 
@@ -65,6 +69,10 @@ export default function EmailGate({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  if (!hasLeague) {
+    return <LeagueSelector>{children}</LeagueSelector>;
   }
 
   return <>{children}</>;

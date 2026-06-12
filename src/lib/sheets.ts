@@ -261,6 +261,114 @@ export async function recalculatePoints(matchId: string): Promise<void> {
   }
 }
 
+const LEAGUES_RANGE = "Leagues!A2:B";
+const LEAGUE_MEMBERS_RANGE = "LeagueMembers!A2:D";
+
+export async function getLeagues(): Promise<string[]> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: LEAGUES_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    return rows.map((row) => row[0] ?? "").filter((name) => name !== "");
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch leagues: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+export async function getLeagueMembers(
+  leagueName: string
+): Promise<{ userName: string; userEmail: string }[]> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: LEAGUE_MEMBERS_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    return rows
+      .filter((row) => row[2] === leagueName)
+      .map((row) => ({ userName: row[0] ?? "", userEmail: row[1] ?? "" }));
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch league members: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+export async function joinLeague(userName: string, userEmail: string, leagueName: string): Promise<void> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: LEAGUE_MEMBERS_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    const rowIndex = rows.findIndex((row) => row[1] === userEmail);
+
+    if (rowIndex === -1) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: LEAGUE_MEMBERS_RANGE,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[userName, userEmail, leagueName, new Date().toISOString()]],
+        },
+      });
+      return;
+    }
+
+    const sheetRow = rowIndex + 2;
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `LeagueMembers!C${sheetRow}`,
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [[leagueName]],
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to join league: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+export async function getUserLeague(userEmail: string): Promise<string | null> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: LEAGUE_MEMBERS_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    const row = rows.find((r) => r[1] === userEmail);
+
+    return row ? (row[2] ?? null) : null;
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch user league: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 export async function getLeaderboard(): Promise<{ name: string; points: number }[]> {
   try {
     const predictions = await getPredictions();

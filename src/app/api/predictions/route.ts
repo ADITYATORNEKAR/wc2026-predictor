@@ -3,9 +3,15 @@ import { getPredictions, upsertPrediction } from "@/lib/sheets";
 import { MATCHES } from "@/lib/matches";
 import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const userName = request.nextUrl.searchParams.get("userName");
     const predictions = await getPredictions();
+
+    if (userName) {
+      return NextResponse.json(predictions.filter((p) => p.userName === userName));
+    }
+
     return NextResponse.json(predictions);
   } catch (error) {
     return NextResponse.json(

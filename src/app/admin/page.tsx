@@ -22,6 +22,32 @@ export default function AdminPage() {
   const [submittingMatchId, setSubmittingMatchId] = useState<string | null>(null);
   const [syncMessage, setSyncMessage] = useState<MatchStatus | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [leagueCounts, setLeagueCounts] = useState<{ name: string; count: number }[]>([]);
+  const [seedMessage, setSeedMessage] = useState<MatchStatus | null>(null);
+  const [seeding, setSeeding] = useState(false);
+
+  const loadLeagueCounts = async () => {
+    try {
+      const leaguesRes = await fetch("/api/leagues");
+      const leagues: string[] = await leaguesRes.json();
+
+      const counts = await Promise.all(
+        leagues.map(async (league) => {
+          try {
+            const membersRes = await fetch(`/api/leagues/${encodeURIComponent(league)}/members`);
+            const members = await membersRes.json();
+            return { name: league, count: Array.isArray(members) ? members.length : 0 };
+          } catch {
+            return { name: league, count: 0 };
+          }
+        })
+      );
+
+      setLeagueCounts(counts);
+    } catch {
+      setLeagueCounts([]);
+    }
+  };
 
   useEffect(() => {
     if (!unlocked) return;
@@ -30,7 +56,35 @@ export default function AdminPage() {
       .then((res) => res.json())
       .then(setMatches)
       .catch(() => setMatches([]));
+
+    loadLeagueCounts();
   }, [unlocked]);
+
+  const handleSeedLeagues = async () => {
+    setSeeding(true);
+    setSeedMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/seed-leagues?adminKey=${encodeURIComponent(adminKey)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSeedMessage({ type: "error", message: data.error ?? "Failed to seed leagues" });
+        return;
+      }
+
+      setSeedMessage({
+        type: "success",
+        message: data.skipped ? "Leagues already seeded" : `✅ Seeded ${data.seeded} leagues`,
+      });
+
+      await loadLeagueCounts();
+    } catch {
+      setSeedMessage({ type: "error", message: "Failed to seed leagues" });
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const getScoreInput = (matchId: string): ScoreInput => {
     return scores[matchId] ?? { home: "", away: "" };
@@ -177,6 +231,27 @@ export default function AdminPage() {
           {syncMessage.message}
         </p>
       )}
+
+      <div style={{ border: "1px solid #00573F", background: "#002820", padding: 12, marginBottom: 12, borderRadius: 8 }}>
+        <h2 style={{ color: "#FFD700", marginTop: 0 }}>Team Leagues</h2>
+        <button onClick={handleSeedLeagues} disabled={seeding} style={{ ...buttonStyle, marginBottom: 8 }}>
+          {seeding ? "Seeding..." : "Seed Leagues"}
+        </button>
+        {seedMessage && (
+          <p style={{ color: seedMessage.type === "success" ? "#00A651" : "#ff6b6b" }}>
+            {seedMessage.message}
+          </p>
+        )}
+        {leagueCounts.length > 0 && (
+          <ul style={{ marginTop: 8 }}>
+            {leagueCounts.map((league) => (
+              <li key={league.name}>
+                {league.name}: {league.count} member{league.count === 1 ? "" : "s"}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {matches.map((match) => {
         const input = getScoreInput(match.id);

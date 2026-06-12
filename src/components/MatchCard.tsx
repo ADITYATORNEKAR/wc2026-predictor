@@ -1,6 +1,6 @@
 import { Match, Prediction } from "@/lib/types";
-import { getFlag } from "@/lib/flags";
-import { OUTCOME_DISPLAY } from "@/lib/scoring";
+import { getFlag, FLAG_MAP } from "@/lib/flags";
+import { getPredictionDisplay } from "@/lib/scoring";
 
 function formatMatchDate(isoDate: string): string {
   return new Date(isoDate).toLocaleString("en-US", {
@@ -111,7 +111,7 @@ export default function MatchCard({
 
       {userPrediction && (
         <div className="mt-3 flex items-center justify-center gap-2 text-sm text-white">
-          <span>{OUTCOME_DISPLAY[userPrediction.prediction]}</span>
+          <span>{getPredictionDisplay(userPrediction.prediction, match, FLAG_MAP)}</span>
           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${pointsBadgeClasses(userPrediction.points)}`}>
             {pointsBadgeLabel(userPrediction.points)}
           </span>

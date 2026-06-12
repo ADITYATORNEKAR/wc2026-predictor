@@ -1,4 +1,4 @@
-const FLAG_MAP: Record<string, string> = {
+export const FLAG_MAP: Record<string, string> = {
   'Mexico': '🇲🇽',
   'South Africa': '🇿🇦',
   'South Korea': '🇰🇷',
