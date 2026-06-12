@@ -131,8 +131,8 @@ function mapEvent(event: EspnEvent): MappedMatch | null {
   };
 }
 
-export async function fetchAllMatches(): Promise<MappedMatch[]> {
-  const dates = getDateRange(START_DATE, END_DATE);
+export async function fetchAllMatches(start: string = START_DATE, end: string = END_DATE): Promise<MappedMatch[]> {
+  const dates = getDateRange(start, end);
   const allEvents: EspnEvent[] = [];
 
   for (let i = 0; i < dates.length; i += BATCH_SIZE) {

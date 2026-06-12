@@ -133,6 +133,33 @@ export async function upsertPrediction(
   }
 }
 
+export async function getMatchResultsMap(): Promise<Record<string, { home: string; away: string }>> {
+  try {
+    const sheets = getSheetsClient();
+    const spreadsheetId = getSheetId();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: MATCHES_RANGE,
+    });
+
+    const rows = response.data.values ?? [];
+    const map: Record<string, { home: string; away: string }> = {};
+
+    rows.forEach((row) => {
+      const matchId = row[0];
+      if (!matchId) return;
+      map[matchId] = { home: row[6] ?? "", away: row[7] ?? "" };
+    });
+
+    return map;
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch match results: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 export async function setMatchResult(
   matchId: string,
   homeScore: number,

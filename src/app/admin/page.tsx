@@ -203,7 +203,7 @@ export default function AdminPage() {
     setSyncMessage(null);
 
     try {
-      const response = await fetch("/api/sync-results");
+      const response = await fetch(`/api/sync-results?adminKey=${encodeURIComponent(adminKey)}`);
       const data = await response.json();
 
       if (!response.ok) {
