@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Match, Stage } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import { formatMatchDate } from "@/lib/dateUtils";
 import TeamFlag from "@/components/TeamFlag";
 
@@ -35,7 +35,7 @@ function TeamRow({ name, placeholder }: { name: string; placeholder?: string }) 
     );
   }
 
-  const rank = FIFA_RANKINGS[name];
+  const rank = getTeamRank(name);
 
   return (
     <span className="flex flex-col">

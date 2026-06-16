@@ -1,11 +1,11 @@
 import { Match, Prediction } from "@/lib/types";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import { formatMatchDate } from "@/lib/dateUtils";
 import TeamFlag from "./TeamFlag";
 import PredictionDisplay from "./PredictionDisplay";
 
 function RankBadge({ team }: { team: string }) {
-  const rank = FIFA_RANKINGS[team];
+  const rank = getTeamRank(team);
   if (!rank) return null;
 
   return (

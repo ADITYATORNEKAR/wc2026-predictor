@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Match } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import TeamFlag from "@/components/TeamFlag";
 
 const POLL_INTERVAL_MS = 60000;
@@ -214,7 +214,7 @@ export default function StandingsPage() {
                         )}
                       </td>
                       <td className="px-1 py-1.5 text-center text-[#94a3b8]">
-                        {FIFA_RANKINGS[team.team] ? `#${FIFA_RANKINGS[team.team]}` : "-"}
+                        {getTeamRank(team.team) ? `#${getTeamRank(team.team)}` : "-"}
                       </td>
                       <td className="px-1 py-1.5 text-center">{team.played}</td>
                       <td className="px-1 py-1.5 text-center">{team.wins}</td>

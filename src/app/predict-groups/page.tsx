@@ -5,7 +5,7 @@ import Link from "next/link";
 import MatchCard from "@/components/MatchCard";
 import { Match, Prediction } from "@/lib/types";
 import { PredictionOutcome } from "@/lib/scoring";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import { MATCHES } from "@/lib/matches";
 import { hasMatchStarted, formatMatchDateShort } from "@/lib/dateUtils";
 import TeamFlag from "@/components/TeamFlag";
@@ -15,7 +15,7 @@ function getOutcomeRank(outcome: PredictionOutcome, match: Match): number | unde
   if (outcome === "draw") return undefined;
   const team = outcome === "home" ? match.homeTeam : match.awayTeam;
   if (!team) return undefined;
-  return FIFA_RANKINGS[team];
+  return getTeamRank(team);
 }
 
 interface PickCounts {

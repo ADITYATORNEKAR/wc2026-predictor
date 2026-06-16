@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Match, Prediction, SpecialPrediction } from "@/lib/types";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
 import TeamFlag from "@/components/TeamFlag";
 
@@ -267,7 +267,7 @@ export default function AnalyticsPage() {
                           <TeamFlag team={entry.team} size={20} />
                           <span className="font-semibold">{entry.team}</span>
                           <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
-                            #{FIFA_RANKINGS[entry.team] ?? "-"}
+                            #{getTeamRank(entry.team) ?? "-"}
                           </span>
                         </span>
                         <span className="text-[#94a3b8]">

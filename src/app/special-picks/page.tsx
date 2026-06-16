@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import TeamFlag from "@/components/TeamFlag";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS, ALL_WC_TEAMS } from "@/lib/special-picks";
 import { SpecialPrediction } from "@/lib/types";
 import { formatMatchDateShort } from "@/lib/dateUtils";
@@ -51,7 +51,7 @@ export default function SpecialPicksPage() {
 
   const sortedTeams = useMemo(() => {
     return [...ALL_WC_TEAMS]
-      .sort((a, b) => (FIFA_RANKINGS[a] ?? 999) - (FIFA_RANKINGS[b] ?? 999))
+      .sort((a, b) => (getTeamRank(a) ?? 999) - (getTeamRank(b) ?? 999))
       .filter((team) => team.toLowerCase().includes(search.toLowerCase()));
   }, [search]);
 
@@ -208,7 +208,7 @@ export default function SpecialPicksPage() {
                     <TeamFlag team={team} size={24} />
                     <span className="text-xs font-semibold text-white">{team}</span>
                     <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
-                      #{FIFA_RANKINGS[team] ?? "-"}
+                      #{getTeamRank(team) ?? "-"}
                     </span>
                   </button>
                 );

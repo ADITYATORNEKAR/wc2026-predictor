@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Match, Prediction, SpecialPrediction } from "@/lib/types";
 import { MappedMatch } from "@/lib/espn";
-import { FIFA_RANKINGS } from "@/lib/rankings";
+import { getTeamRank } from "@/lib/rankings";
 import { TOP_SCORER_OPTIONS } from "@/lib/special-picks";
 import { formatMatchDateShort, hasMatchStarted } from "@/lib/dateUtils";
 import TeamFlag from "@/components/TeamFlag";
@@ -405,7 +405,7 @@ export default function MyPredictionsPage() {
                         <span className="inline-flex items-center gap-1 text-white">
                           <TeamFlag team={wcWinner.pick} size={20} /> {wcWinner.pick}{" "}
                           <span className="rounded bg-[#001a13] px-1 py-0.5 text-[9px] font-semibold text-[#94a3b8]">
-                            #{FIFA_RANKINGS[wcWinner.pick] ?? "-"}
+                            #{getTeamRank(wcWinner.pick) ?? "-"}
                           </span>
                         </span>
                         {specialPointsBadge(wcWinner.points, 50)}
