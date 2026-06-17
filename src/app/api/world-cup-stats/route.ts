@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { getSheetsClient, getSheetId } from "@/lib/sheets";
+import { getTeamRank } from "@/lib/rankings";
 
 export const revalidate = 300;
 
 const MATCHES_RANGE = "Matches!A2:H";
+
+function hasResult(row: string[]): boolean {
+  const h = row[6];
+  const a = row[7];
+  return h !== undefined && h !== "" && a !== undefined && a !== "";
+}
 
 export async function GET() {
   try {
@@ -19,19 +26,51 @@ export async function GET() {
 
     let matchesPlayed = 0;
     let totalGoals = 0;
+    let highestScoringMatch: {
+      home: string;
+      away: string;
+      homeScore: number;
+      awayScore: number;
+    } | null = null;
+    let highestTotal = -1;
+    let biggestUpset: {
+      winner: string;
+      loser: string;
+      winnerRank: number;
+      loserRank: number;
+    } | null = null;
+    let biggestUpsetMargin = 0;
 
     for (const row of rows) {
-      const actualHome = row[6];
-      const actualAway = row[7];
+      if (!hasResult(row)) continue;
 
-      if (
-        actualHome !== undefined &&
-        actualHome !== "" &&
-        actualAway !== undefined &&
-        actualAway !== ""
-      ) {
-        matchesPlayed++;
-        totalGoals += Number(actualHome) + Number(actualAway);
+      const homeTeam = row[1] ?? "";
+      const awayTeam = row[2] ?? "";
+      const homeScore = Number(row[6]);
+      const awayScore = Number(row[7]);
+      const matchTotal = homeScore + awayScore;
+
+      matchesPlayed++;
+      totalGoals += matchTotal;
+
+      if (matchTotal > highestTotal) {
+        highestTotal = matchTotal;
+        highestScoringMatch = { home: homeTeam, away: awayTeam, homeScore, awayScore };
+      }
+
+      if (homeScore !== awayScore) {
+        const winner = homeScore > awayScore ? homeTeam : awayTeam;
+        const loser = homeScore > awayScore ? awayTeam : homeTeam;
+        const winnerRank = getTeamRank(winner);
+        const loserRank = getTeamRank(loser);
+
+        if (winnerRank !== undefined && loserRank !== undefined) {
+          const margin = winnerRank - loserRank;
+          if (margin > biggestUpsetMargin) {
+            biggestUpsetMargin = margin;
+            biggestUpset = { winner, loser, winnerRank, loserRank };
+          }
+        }
       }
     }
 
@@ -39,7 +78,13 @@ export async function GET() {
       ? (totalGoals / matchesPlayed).toFixed(1)
       : "0.0";
 
-    return NextResponse.json({ matchesPlayed, totalGoals, goalsPerMatch });
+    return NextResponse.json({
+      matchesPlayed,
+      totalGoals,
+      goalsPerMatch,
+      highestScoringMatch,
+      biggestUpset,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch stats" },
