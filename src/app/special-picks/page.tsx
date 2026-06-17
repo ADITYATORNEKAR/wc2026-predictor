@@ -12,6 +12,12 @@ const USERNAME_KEY = "wc2026_username";
 
 const formatTimestamp = formatMatchDateShort;
 
+interface WCStats {
+  matchesPlayed: number;
+  totalGoals: number;
+  goalsPerMatch: string;
+}
+
 export default function SpecialPicksPage() {
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
@@ -24,6 +30,8 @@ export default function SpecialPicksPage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [topScorerLocked, setTopScorerLocked] = useState(false);
+  const [wcStats, setWcStats] = useState<WCStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_KEY) ?? "";
@@ -47,6 +55,12 @@ export default function SpecialPicksPage() {
       .then((res) => res.json())
       .then((data) => setTopScorerLocked(!!data.topscorer_locked))
       .catch(() => setTopScorerLocked(false));
+
+    fetch("/api/world-cup-stats")
+      .then((res) => res.json())
+      .then((data) => setWcStats(data))
+      .catch(() => setWcStats(null))
+      .finally(() => setStatsLoading(false));
   }, []);
 
   const sortedTeams = useMemo(() => {
@@ -116,6 +130,49 @@ export default function SpecialPicksPage() {
       <h1 className="mb-6 font-[family-name:var(--font-heading)] text-4xl tracking-wide text-[#FFD700]">
         🌟 Bonus Predictions
       </h1>
+
+      <div className="mb-8 overflow-hidden rounded-xl border border-[#00573F] bg-[#002820]">
+        {statsLoading ? (
+          <div className="flex items-center justify-center gap-8 px-6 py-6 sm:gap-16">
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-10 w-20 animate-pulse rounded-md bg-white/10" />
+              <div className="h-4 w-24 animate-pulse rounded bg-white/10" />
+            </div>
+            <div className="h-12 w-px bg-white/10" />
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-10 w-20 animate-pulse rounded-md bg-white/10" />
+              <div className="h-4 w-28 animate-pulse rounded bg-white/10" />
+            </div>
+          </div>
+        ) : wcStats ? (
+          <div className="flex flex-col items-center gap-4 px-6 py-6">
+            <div className="flex items-center justify-center gap-8 sm:gap-16">
+              <div className="flex flex-col items-center">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg">⚽</span>
+                  <span className="font-[family-name:var(--font-heading)] text-4xl font-bold tracking-wide text-white sm:text-5xl">
+                    {wcStats.totalGoals}
+                  </span>
+                </div>
+                <span className="mt-1 text-sm text-[#94a3b8]">Goals Scored</span>
+              </div>
+              <div className="h-14 w-px bg-white/20" />
+              <div className="flex flex-col items-center">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg">🏟️</span>
+                  <span className="font-[family-name:var(--font-heading)] text-4xl font-bold tracking-wide text-white sm:text-5xl">
+                    {wcStats.matchesPlayed}
+                  </span>
+                </div>
+                <span className="mt-1 text-sm text-[#94a3b8]">Matches Played</span>
+              </div>
+            </div>
+            <span className="text-xs font-medium text-[#FFD700]">
+              Live • updates after each match
+            </span>
+          </div>
+        ) : null}
+      </div>
 
       {loading ? (
         <p className="text-sm text-[#94a3b8]">Loading your bonus picks...</p>
