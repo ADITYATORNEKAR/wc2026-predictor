@@ -12,10 +12,49 @@ const USERNAME_KEY = "wc2026_username";
 
 const formatTimestamp = formatMatchDateShort;
 
-interface WCStats {
-  matchesPlayed: number;
-  totalGoals: number;
-  goalsPerMatch: string;
+type PlayerStatsMap = Record<string, { goals: number; matches: number }>;
+
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[.]/g, "")
+    .trim();
+}
+
+function findPlayerStats(
+  playerName: string,
+  stats: PlayerStatsMap
+): { goals: number; matches: number } | null {
+  const normalized = normalizeForMatch(playerName);
+  const entries = Object.entries(stats);
+
+  for (const [key, value] of entries) {
+    if (normalizeForMatch(key) === normalized) return value;
+  }
+
+  const words = normalized.split(/\s+/);
+  const lastName = words.filter((w) => w.length > 2).pop();
+  if (lastName) {
+    for (const [key, value] of entries) {
+      const keyLast = normalizeForMatch(key)
+        .split(/\s+/)
+        .filter((w) => w.length > 2)
+        .pop();
+      if (keyLast === lastName) return value;
+    }
+  }
+
+  const firstName = words[0];
+  if (firstName && firstName.length >= 4) {
+    for (const [key, value] of entries) {
+      const keyFirst = normalizeForMatch(key).split(/\s+/)[0];
+      if (keyFirst === firstName) return value;
+    }
+  }
+
+  return null;
 }
 
 export default function SpecialPicksPage() {
@@ -30,8 +69,7 @@ export default function SpecialPicksPage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [topScorerLocked, setTopScorerLocked] = useState(false);
-  const [wcStats, setWcStats] = useState<WCStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [playerStats, setPlayerStats] = useState<PlayerStatsMap>({});
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_KEY) ?? "";
@@ -56,11 +94,12 @@ export default function SpecialPicksPage() {
       .then((data) => setTopScorerLocked(!!data.topscorer_locked))
       .catch(() => setTopScorerLocked(false));
 
-    fetch("/api/world-cup-stats")
+    fetch("/api/player-stats")
       .then((res) => res.json())
-      .then((data) => setWcStats(data))
-      .catch(() => setWcStats(null))
-      .finally(() => setStatsLoading(false));
+      .then((data) => {
+        if (data && !data.error) setPlayerStats(data);
+      })
+      .catch(() => {});
   }, []);
 
   const sortedTeams = useMemo(() => {
@@ -131,49 +170,6 @@ export default function SpecialPicksPage() {
         🌟 Bonus Predictions
       </h1>
 
-      <div className="mb-8 overflow-hidden rounded-xl border border-[#00573F] bg-[#002820]">
-        {statsLoading ? (
-          <div className="flex items-center justify-center gap-8 px-6 py-6 sm:gap-16">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-10 w-20 animate-pulse rounded-md bg-white/10" />
-              <div className="h-4 w-24 animate-pulse rounded bg-white/10" />
-            </div>
-            <div className="h-12 w-px bg-white/10" />
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-10 w-20 animate-pulse rounded-md bg-white/10" />
-              <div className="h-4 w-28 animate-pulse rounded bg-white/10" />
-            </div>
-          </div>
-        ) : wcStats ? (
-          <div className="flex flex-col items-center gap-4 px-6 py-6">
-            <div className="flex items-center justify-center gap-8 sm:gap-16">
-              <div className="flex flex-col items-center">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg">⚽</span>
-                  <span className="font-[family-name:var(--font-heading)] text-4xl font-bold tracking-wide text-white sm:text-5xl">
-                    {wcStats.totalGoals}
-                  </span>
-                </div>
-                <span className="mt-1 text-sm text-[#94a3b8]">Goals Scored</span>
-              </div>
-              <div className="h-14 w-px bg-white/20" />
-              <div className="flex flex-col items-center">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg">🏟️</span>
-                  <span className="font-[family-name:var(--font-heading)] text-4xl font-bold tracking-wide text-white sm:text-5xl">
-                    {wcStats.matchesPlayed}
-                  </span>
-                </div>
-                <span className="mt-1 text-sm text-[#94a3b8]">Matches Played</span>
-              </div>
-            </div>
-            <span className="text-xs font-medium text-[#FFD700]">
-              Live • updates after each match
-            </span>
-          </div>
-        ) : null}
-      </div>
-
       {loading ? (
         <p className="text-sm text-[#94a3b8]">Loading your bonus picks...</p>
       ) : (
@@ -201,6 +197,7 @@ export default function SpecialPicksPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {filteredPlayers.map((player) => {
                 const isSelected = topScorerPick === player.id;
+                const pStats = findPlayerStats(player.name, playerStats);
                 return (
                   <button
                     key={player.id}
@@ -225,6 +222,11 @@ export default function SpecialPicksPage() {
                         #{player.rank}
                       </span>
                     </div>
+                    {pStats && (
+                      <div className="mt-1 text-[10px] text-[#9CA3AF]">
+                        ⚽ {pStats.goals} goal{pStats.goals !== 1 ? "s" : ""} • 🏟️ {pStats.matches} app{pStats.matches !== 1 ? "s" : ""}
+                      </div>
+                    )}
                     <div className="mt-1 text-[10px] font-semibold text-[#FFD700]">🎯 30 pts if correct</div>
                   </button>
                 );
