@@ -278,9 +278,10 @@ export default function PredictKnockoutsPage() {
           const isUnrevealed = !match.homeTeam || !match.awayTeam;
           const isR32 = match.stage === "R32";
           const isConsolation = CONSOLATION_MATCH_IDS.has(match.id);
-          const isPast = hasMatchStarted(match.matchDate) || lockedMatchIds.has(match.id);
+          const started = hasMatchStarted(match.matchDate);
+          const isPast = started || lockedMatchIds.has(match.id);
           const isWithinWindow = isWithin48Hours(match.matchDate);
-          const predictionsDisabled = isUnrevealed || (!isR32 && !isPast && !isWithinWindow);
+          const predictionsOpen = !isUnrevealed && !isPast && (isR32 || isWithinWindow);
 
           const existingPrediction = userPredictions.get(match.id);
           const selection = existingPrediction?.prediction;
@@ -336,7 +337,7 @@ export default function PredictKnockoutsPage() {
                           <button
                             key={outcome}
                             onClick={() => handleSelect(match.id, outcome)}
-                            disabled={isSaving || predictionsDisabled}
+                            disabled={isSaving || !predictionsOpen}
                             className={`rounded-md border px-2 py-2 text-center text-sm font-semibold transition disabled:opacity-60 ${
                               isSelected
                                 ? "border-[#00A651] bg-[#00A651] text-white"
