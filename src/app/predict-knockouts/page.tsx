@@ -12,6 +12,7 @@ import TeamFlag from "@/components/TeamFlag";
 import PredictionDisplay from "@/components/PredictionDisplay";
 
 const PREDICTION_WINDOW_HOURS = 48;
+const CONSOLATION_MATCH_IDS = new Set(["k1", "k4"]);
 
 const TABS: { label: string; stages: Stage[] }[] = [
   { label: "Round of 32", stages: ["R32"] },
@@ -79,7 +80,7 @@ function PredictionWindowBadge({ match }: { match: Match }) {
     return <span className="rounded-full bg-gray-600 px-2 py-0.5 text-[10px] font-semibold text-white">Predictions Closed</span>;
   }
 
-  if (isWithin48Hours(match.matchDate)) {
+  if (match.stage === "R32" || isWithin48Hours(match.matchDate)) {
     return <span className="rounded-full bg-[#00A651] px-2 py-0.5 text-[10px] font-semibold text-white">Predictions Open</span>;
   }
 
@@ -240,6 +241,12 @@ export default function PredictKnockoutsPage() {
         ⏳ Knockout predictions unlock 48 hours before each match kickoff
       </div>
 
+      {activeTab === 0 && (
+        <div className="mb-6 rounded-lg border border-[#2d6a4f] bg-[#1b4332] px-4 py-3 text-center text-sm font-semibold text-[#FFD700]">
+          🏆 Round of 32 has begun! Make your picks before each match kicks off.
+        </div>
+      )}
+
       {predictionsLoading && (
         <p className="mb-6 text-sm text-[#94a3b8]">⏳ Loading your predictions...</p>
       )}
@@ -269,13 +276,18 @@ export default function PredictKnockoutsPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {tabMatches.map((match) => {
           const isUnrevealed = !match.homeTeam || !match.awayTeam;
+          const isR32 = match.stage === "R32";
+          const isConsolation = CONSOLATION_MATCH_IDS.has(match.id);
           const isPast = hasMatchStarted(match.matchDate) || lockedMatchIds.has(match.id);
           const isWithinWindow = isWithin48Hours(match.matchDate);
-          const predictionsDisabled = isUnrevealed || (!isPast && !isWithinWindow);
+          const predictionsDisabled = isUnrevealed || (!isR32 && !isPast && !isWithinWindow);
 
           const existingPrediction = userPredictions.get(match.id);
           const selection = existingPrediction?.prediction;
           const isSaving = savingMatchId === match.id;
+
+          const showLockedState = isPast && !isUnrevealed;
+          const hasResult = existingPrediction?.points !== undefined;
 
           return (
             <div key={match.id} className="flex flex-col gap-3">
@@ -286,11 +298,29 @@ export default function PredictKnockoutsPage() {
                   <PredictionWindowBadge match={match} />
                 </div>
 
-                {isPast && !isUnrevealed ? (
-                  existingPrediction ? (
-                    <p className="text-center text-[#94a3b8]">
-                      Your pick: <PredictionDisplay prediction={existingPrediction.prediction} match={match} size={20} />
+                {showLockedState ? (
+                  isConsolation ? (
+                    <p className="text-center text-sm font-semibold text-[#FFD700]">
+                      ⭐ +3 pts awarded
                     </p>
+                  ) : existingPrediction && hasResult ? (
+                    <div className="text-center">
+                      <p className="text-[#94a3b8]">
+                        Your pick: <PredictionDisplay prediction={existingPrediction.prediction} match={match} size={20} />
+                      </p>
+                      <p className={`mt-1 text-sm font-semibold ${existingPrediction.points! > 0 ? "text-[#00A651]" : "text-red-400"}`}>
+                        {existingPrediction.points! > 0 ? `✅ +${existingPrediction.points} pts` : "❌ 0 pts"}
+                      </p>
+                    </div>
+                  ) : existingPrediction ? (
+                    <div className="text-center">
+                      <p className="text-[#94a3b8]">
+                        Your pick: <PredictionDisplay prediction={existingPrediction.prediction} match={match} size={20} />
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-orange-400">
+                        ⏳ Match in progress — predictions locked
+                      </p>
+                    </div>
                   ) : (
                     <p className="rounded-md bg-red-600/20 px-3 py-2 text-center text-sm font-semibold text-red-400">
                       🔒 Predictions Closed — You did not make a prediction

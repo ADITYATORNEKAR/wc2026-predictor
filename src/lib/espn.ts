@@ -10,13 +10,18 @@ export const ESPN_NAME_MAP: Record<string, string> = {
   "Korea Republic": "South Korea",
   "Turkey": "Türkiye",
   "Côte d'Ivoire": "Ivory Coast",
+  "Cote d'Ivoire": "Ivory Coast",
+  "Ivory Coast": "Ivory Coast",
   "Bosnia and Herzegovina": "Bosnia and Herzegovina",
   "Bosnia-Herzegovina": "Bosnia and Herzegovina",
+  "Bosnia & Herzegovina": "Bosnia and Herzegovina",
   "Cape Verde": "Cabo Verde",
   "Democratic Republic of Congo": "DR Congo",
   "DR Congo": "DR Congo",
   "Congo DR": "DR Congo",
+  "Congo, DR": "DR Congo",
   "United States": "USA",
+  "USA": "USA",
 };
 
 export type MatchStatus = "upcoming" | "live" | "halftime" | "finished";

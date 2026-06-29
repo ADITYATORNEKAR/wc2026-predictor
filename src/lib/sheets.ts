@@ -549,12 +549,30 @@ export async function setConfig(key: string, value: string): Promise<void> {
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
 
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: CONFIG_RANGE,
-    });
+    let rows: string[][] = [];
+    try {
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: CONFIG_RANGE,
+      });
+      rows = (response.data.values as string[][] | undefined) ?? [];
+    } catch {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            { addSheet: { properties: { title: "Config" } } },
+          ],
+        },
+      });
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: "Config!A1:C1",
+        valueInputOption: "RAW",
+        requestBody: { values: [["key", "value", "updatedAt"]] },
+      });
+    }
 
-    const rows = response.data.values ?? [];
     const rowIndex = rows.findIndex((r) => r[0] === key);
 
     if (rowIndex === -1) {
