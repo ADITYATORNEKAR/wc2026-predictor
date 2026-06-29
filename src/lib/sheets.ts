@@ -1,10 +1,10 @@
 import { google, sheets_v4 } from "googleapis";
 import { randomUUID } from "crypto";
 import { Prediction, SpecialPrediction, SpecialPredictionType } from "./types";
-import { calculatePoints, PredictionOutcome } from "./scoring";
+import { calculatePoints, calculateKnockoutPoints, PredictionOutcome } from "./scoring";
 
 const PREDICTIONS_RANGE = "Predictions!A2:F";
-const MATCHES_RANGE = "Matches!A2:H";
+const MATCHES_RANGE = "Matches!A2:I";
 const CONFIG_RANGE = "Config!A2:C";
 
 export function getSheetId(): string {
@@ -133,7 +133,7 @@ export async function upsertPrediction(
   }
 }
 
-export async function getMatchResultsMap(): Promise<Record<string, { home: string; away: string }>> {
+export async function getMatchResultsMap(): Promise<Record<string, { home: string; away: string; winner: string }>> {
   try {
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
@@ -144,12 +144,12 @@ export async function getMatchResultsMap(): Promise<Record<string, { home: strin
     });
 
     const rows = response.data.values ?? [];
-    const map: Record<string, { home: string; away: string }> = {};
+    const map: Record<string, { home: string; away: string; winner: string }> = {};
 
     rows.forEach((row) => {
       const matchId = row[0];
       if (!matchId) return;
-      map[matchId] = { home: row[6] ?? "", away: row[7] ?? "" };
+      map[matchId] = { home: row[6] ?? "", away: row[7] ?? "", winner: row[8] ?? "" };
     });
 
     return map;
@@ -163,7 +163,8 @@ export async function getMatchResultsMap(): Promise<Record<string, { home: strin
 export async function setMatchResult(
   matchId: string,
   homeScore: number,
-  awayScore: number
+  awayScore: number,
+  winner?: "home" | "away" | null
 ): Promise<void> {
   try {
     const sheets = getSheetsClient();
@@ -181,14 +182,14 @@ export async function setMatchResult(
       throw new Error(`Match with id "${matchId}" not found in Matches sheet`);
     }
 
-    const sheetRow = rowIndex + 2; // account for header row + 1-based indexing
+    const sheetRow = rowIndex + 2;
 
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `Matches!G${sheetRow}:H${sheetRow}`,
+      range: `Matches!G${sheetRow}:I${sheetRow}`,
       valueInputOption: "RAW",
       requestBody: {
-        values: [[homeScore, awayScore]],
+        values: [[homeScore, awayScore, winner ?? ""]],
       },
     });
   } catch (error) {
@@ -217,6 +218,8 @@ export async function recalculatePoints(matchId: string): Promise<void> {
 
     const actualHome = matchRow[6];
     const actualAway = matchRow[7];
+    const winner = matchRow[8] as "home" | "away" | undefined;
+    const isKnockout = matchId.startsWith("k");
 
     if (actualHome === undefined || actualHome === "" || actualAway === undefined || actualAway === "") {
       throw new Error(`Match "${matchId}" does not have a result set yet`);
@@ -238,7 +241,10 @@ export async function recalculatePoints(matchId: string): Promise<void> {
       if (row[2] !== matchId) return;
 
       const prediction = row[3] as PredictionOutcome;
-      const points = calculatePoints(prediction, actualHomeScore, actualAwayScore);
+      const points =
+        isKnockout && winner
+          ? calculateKnockoutPoints(prediction, winner)
+          : calculatePoints(prediction, actualHomeScore, actualAwayScore);
       const sheetRow = index + 2;
 
       data.push({

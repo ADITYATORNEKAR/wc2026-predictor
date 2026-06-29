@@ -15,6 +15,14 @@ export function calculatePoints(
   return prediction === actual ? 3 : 0;
 }
 
+export function calculateKnockoutPoints(
+  prediction: PredictionOutcome,
+  winner: "home" | "away"
+): number {
+  if (prediction === "draw") return 0;
+  return prediction === winner ? 3 : 0;
+}
+
 export const OUTCOME_LABELS: Record<PredictionOutcome, string> = {
   home: "Home Win",
   draw: "Draw",

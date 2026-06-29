@@ -37,13 +37,13 @@ interface PickCounts {
 }
 
 function CrowdBar({ match, counts, selection }: { match: Match; counts: PickCounts; selection?: PredictionOutcome }) {
-  if (counts.total === 0) {
+  const validTotal = counts.home + counts.away;
+  if (validTotal === 0) {
     return <p className="mt-3 text-center text-xs italic text-[#94a3b8]">Be the first to predict this match!</p>;
   }
 
-  const homePct = Math.round((counts.home / counts.total) * 100);
-  const drawPct = Math.round((counts.draw / counts.total) * 100);
-  const awayPct = 100 - homePct - drawPct;
+  const homePct = Math.round((counts.home / validTotal) * 100);
+  const awayPct = 100 - homePct;
 
   const segmentClasses = (outcome: PredictionOutcome) =>
     selection === outcome ? "ring-2 ring-inset ring-white" : "";
@@ -51,16 +51,14 @@ function CrowdBar({ match, counts, selection }: { match: Match; counts: PickCoun
   return (
     <div className="mt-3">
       <p className="text-center text-xs text-[#94a3b8]">
-        👥 {counts.total} pick{counts.total === 1 ? "" : "s"} so far
+        👥 {validTotal} pick{validTotal === 1 ? "" : "s"} so far
       </p>
       <div className="mt-1 flex h-2 w-full overflow-hidden rounded-full bg-[#001a13]">
         <div className={`bg-[#00A651] ${segmentClasses("home")}`} style={{ width: `${homePct}%` }} />
-        <div className={`bg-[#6b7280] ${segmentClasses("draw")}`} style={{ width: `${drawPct}%` }} />
         <div className={`bg-[#3b82f6] ${segmentClasses("away")}`} style={{ width: `${awayPct}%` }} />
       </div>
       <div className="mt-1 flex items-center justify-between text-[10px] text-[#94a3b8]">
         <span className="inline-flex items-center gap-1"><TeamFlag team={match.homeTeam} size={16} /> {homePct}%</span>
-        <span>{drawPct}% 🤝</span>
         <span className="inline-flex items-center gap-1">{awayPct}% <TeamFlag team={match.awayTeam} size={16} /></span>
       </div>
     </div>
@@ -283,7 +281,8 @@ export default function PredictKnockoutsPage() {
           const isWithinWindow = isWithin48Hours(match.matchDate);
           const predictionsOpen = !isUnrevealed && !isPast && (isR32 || isWithinWindow);
 
-          const existingPrediction = userPredictions.get(match.id);
+          const rawPrediction = userPredictions.get(match.id);
+          const existingPrediction = rawPrediction?.prediction === "draw" ? undefined : rawPrediction;
           const selection = existingPrediction?.prediction;
           const isSaving = savingMatchId === match.id;
 
@@ -329,8 +328,8 @@ export default function PredictKnockoutsPage() {
                   )
                 ) : (
                   <>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(["home", "draw", "away"] as PredictionOutcome[]).map((outcome) => {
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["home", "away"] as PredictionOutcome[]).map((outcome) => {
                         const isSelected = selection === outcome;
                         const rank = getOutcomeRank(outcome, match);
                         return (

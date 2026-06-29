@@ -7,7 +7,7 @@ import { setMatchResult, recalculatePoints, getMatchResultsMap } from "@/lib/she
 const ALL_MATCHES = [...MATCHES, ...KNOCKOUT_MATCHES];
 
 const SYNC_START_DATE = "2026-06-11";
-const SYNC_END_DATE = "2026-07-20";
+const SYNC_END_DATE = "2026-07-22";
 
 function isAuthorized(request: NextRequest): boolean {
   if (request.headers.get("x-vercel-cron") === "1") return true;
@@ -60,7 +60,13 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        await setMatchResult(match.id, espnMatch.homeScore as number, espnMatch.awayScore as number);
+        const isKnockout = match.id.startsWith("k");
+        await setMatchResult(
+          match.id,
+          espnMatch.homeScore as number,
+          espnMatch.awayScore as number,
+          isKnockout ? espnMatch.winner : undefined
+        );
         await recalculatePoints(match.id);
         synced++;
       } catch (error) {

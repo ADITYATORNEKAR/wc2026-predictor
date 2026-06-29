@@ -35,12 +35,14 @@ export interface MappedMatch {
   status: MatchStatus;
   displayClock: string;
   period: number;
+  winner: "home" | "away" | null;
 }
 
 interface EspnCompetitor {
   homeAway: "home" | "away";
   team: { displayName: string; abbreviation: string };
   score: string;
+  winner?: boolean;
 }
 
 interface EspnEvent {
@@ -124,6 +126,8 @@ function mapEvent(event: EspnEvent): MappedMatch | null {
   const status = event.status.type.name;
   const isUpcoming = status === "STATUS_SCHEDULED" || status === "STATUS_TIMED";
 
+  const winner = home.winner ? "home" : away.winner ? "away" : null;
+
   return {
     espnId: event.id,
     homeTeam: normalizeTeamName(home.team.displayName),
@@ -133,6 +137,7 @@ function mapEvent(event: EspnEvent): MappedMatch | null {
     status: mapStatus(status),
     displayClock: event.status.type.shortDetail,
     period: event.status.period,
+    winner,
   };
 }
 

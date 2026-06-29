@@ -62,6 +62,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (match.stage !== "Group" && prediction === "draw") {
+      return NextResponse.json(
+        { error: "Draw is not a valid prediction for knockout matches" },
+        { status: 400 }
+      );
+    }
+
     const { action } = await upsertPrediction({
       userName: resolvedUserName,
       matchId,
