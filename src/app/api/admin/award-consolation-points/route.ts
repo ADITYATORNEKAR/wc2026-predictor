@@ -8,11 +8,11 @@ const SPECIAL_PREDICTIONS_RANGE = "SpecialPredictions!A2:G";
 const CONSOLATION_MATCHES = ["k1", "k4"];
 
 export async function POST(request: NextRequest) {
-  // Auth temporarily disabled
-  // const adminKey = request.nextUrl.searchParams.get("adminKey");
-  // if (!adminKey || adminKey !== process.env.CRON_SECRET) {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
+
+  const adminKey = request.nextUrl.searchParams.get("adminKey");
+  if (!adminKey || adminKey !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const matchIdsParam = request.nextUrl.searchParams.get("matchIds");
