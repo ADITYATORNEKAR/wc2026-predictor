@@ -22,6 +22,12 @@ export const ESPN_NAME_MAP: Record<string, string> = {
   "Congo, DR": "DR Congo",
   "United States": "USA",
   "USA": "USA",
+  "Germany": "Germany",
+  "Paraguay": "Paraguay",
+  "Netherlands": "Netherlands",
+  "Morocco": "Morocco",
+  "Brazil": "Brazil",
+  "Japan": "Japan",
 };
 
 export type MatchStatus = "upcoming" | "live" | "halftime" | "finished";
@@ -76,11 +82,18 @@ function mapStatus(statusName: string): MatchStatus {
     case "STATUS_IN_PROGRESS":
     case "STATUS_FIRST_HALF":
     case "STATUS_SECOND_HALF":
+    case "STATUS_FIRST_HALF_EXTRA":
+    case "STATUS_SECOND_HALF_EXTRA":
+    case "STATUS_END_EXTRA_TIME":
+    case "STATUS_PENALTY_SHOOTOUT":
       return "live";
     case "STATUS_HALFTIME":
+    case "STATUS_HALFTIME_EXTRA":
       return "halftime";
     case "STATUS_FINAL":
     case "STATUS_FULL_TIME":
+    case "STATUS_FINAL_PEN":
+    case "STATUS_FINAL_AET":
       return "finished";
     case "STATUS_SCHEDULED":
     case "STATUS_TIMED":

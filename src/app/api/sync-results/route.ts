@@ -42,11 +42,14 @@ export async function GET(request: NextRequest) {
     const errors: string[] = [];
 
     for (const espnMatch of finishedMatches) {
-      const match = ALL_MATCHES.find(
-        (m) =>
-          normalizeTeamName(m.homeTeam) === espnMatch.homeTeam &&
-          normalizeTeamName(m.awayTeam) === espnMatch.awayTeam
-      );
+      const match = ALL_MATCHES.find((m) => {
+        const home = normalizeTeamName(m.homeTeam);
+        const away = normalizeTeamName(m.awayTeam);
+        return (
+          (home === espnMatch.homeTeam && away === espnMatch.awayTeam) ||
+          (home === espnMatch.awayTeam && away === espnMatch.homeTeam)
+        );
+      });
 
       if (!match) {
         skipped++;
@@ -59,13 +62,27 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
+      // ESPN's home/away designation may not match ours (e.g. neutral-venue
+      // group matches) — map scores onto our own homeTeam/awayTeam convention
+      // so existing user predictions keep their original meaning.
+      const isFlipped = normalizeTeamName(match.homeTeam) === espnMatch.awayTeam;
+      const homeScore = isFlipped ? espnMatch.awayScore : espnMatch.homeScore;
+      const awayScore = isFlipped ? espnMatch.homeScore : espnMatch.awayScore;
+      const winner: "home" | "away" | null = isFlipped
+        ? espnMatch.winner === "home"
+          ? "away"
+          : espnMatch.winner === "away"
+            ? "home"
+            : null
+        : espnMatch.winner;
+
       try {
         const isKnockout = match.id.startsWith("k");
         await setMatchResult(
           match.id,
-          espnMatch.homeScore as number,
-          espnMatch.awayScore as number,
-          isKnockout ? espnMatch.winner : undefined
+          homeScore as number,
+          awayScore as number,
+          isKnockout ? winner : undefined
         );
         await recalculatePoints(match.id);
         synced++;

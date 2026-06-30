@@ -199,34 +199,49 @@ export async function setMatchResult(
   }
 }
 
+// Matches where every user is awarded full credit (3 pts) regardless of their
+// pick or the real result — used when users were unable to submit predictions
+// in time due to a platform bug. This overrides normal scoring permanently,
+// so future syncs/recalculations don't silently undo the credit once the
+// real result comes in.
+const FORCED_CREDIT_MATCH_IDS = new Set(["k1", "k2", "k4"]);
+
 export async function recalculatePoints(matchId: string): Promise<void> {
   try {
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
 
-    const matchesResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: MATCHES_RANGE,
-    });
-
-    const matchRows = matchesResponse.data.values ?? [];
-    const matchRow = matchRows.find((row) => row[0] === matchId);
-
-    if (!matchRow) {
-      throw new Error(`Match with id "${matchId}" not found in Matches sheet`);
-    }
-
-    const actualHome = matchRow[6];
-    const actualAway = matchRow[7];
-    const winner = matchRow[8] as "home" | "away" | undefined;
+    const isForcedCredit = FORCED_CREDIT_MATCH_IDS.has(matchId);
     const isKnockout = matchId.startsWith("k");
 
-    if (actualHome === undefined || actualHome === "" || actualAway === undefined || actualAway === "") {
-      throw new Error(`Match "${matchId}" does not have a result set yet`);
-    }
+    let actualHomeScore = 0;
+    let actualAwayScore = 0;
+    let winner: "home" | "away" | undefined;
 
-    const actualHomeScore = Number(actualHome);
-    const actualAwayScore = Number(actualAway);
+    if (!isForcedCredit) {
+      const matchesResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: MATCHES_RANGE,
+      });
+
+      const matchRows = matchesResponse.data.values ?? [];
+      const matchRow = matchRows.find((row) => row[0] === matchId);
+
+      if (!matchRow) {
+        throw new Error(`Match with id "${matchId}" not found in Matches sheet`);
+      }
+
+      const actualHome = matchRow[6];
+      const actualAway = matchRow[7];
+      winner = matchRow[8] as "home" | "away" | undefined;
+
+      if (actualHome === undefined || actualHome === "" || actualAway === undefined || actualAway === "") {
+        throw new Error(`Match "${matchId}" does not have a result set yet`);
+      }
+
+      actualHomeScore = Number(actualHome);
+      actualAwayScore = Number(actualAway);
+    }
 
     const predictionsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -241,8 +256,9 @@ export async function recalculatePoints(matchId: string): Promise<void> {
       if (row[2] !== matchId) return;
 
       const prediction = row[3] as PredictionOutcome;
-      const points =
-        isKnockout && winner
+      const points = isForcedCredit
+        ? 3
+        : isKnockout && winner
           ? calculateKnockoutPoints(prediction, winner)
           : calculatePoints(prediction, actualHomeScore, actualAwayScore);
       const sheetRow = index + 2;
