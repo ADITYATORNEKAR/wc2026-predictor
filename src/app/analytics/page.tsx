@@ -467,7 +467,7 @@ export default function AnalyticsPage() {
       {!statsLoading && wcStats && wcStats.knockoutBreakdown.total > 0 && (
         <section className="mt-10">
           <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
-            ⏱️ How Matches Were Decided
+            ⏱️ How Knockout Matches Were Decided
           </h2>
 
           {(() => {
