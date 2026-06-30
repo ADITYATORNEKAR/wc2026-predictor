@@ -99,6 +99,7 @@ export default function PredictKnockoutsPage() {
   const [userEmail, setUserEmail] = useState("");
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [allPredictions, setAllPredictions] = useState<Prediction[]>([]);
+  const [matchesData, setMatchesData] = useState<Match[]>(KNOCKOUT_MATCHES);
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
   const [lockedMatchIds, setLockedMatchIds] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -129,6 +130,13 @@ export default function PredictKnockoutsPage() {
       .then((res) => res.json())
       .then(setAllPredictions)
       .catch(() => setAllPredictions([]));
+
+    fetch("/api/matches")
+      .then((res) => res.json())
+      .then((data: Match[]) => {
+        setMatchesData(data.filter((m) => m.stage !== "Group"));
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -220,7 +228,7 @@ export default function PredictKnockoutsPage() {
   };
 
   const tab = TABS[activeTab];
-  const tabMatches = KNOCKOUT_MATCHES
+  const tabMatches = matchesData
     .filter((m) => tab.stages.includes(m.stage))
     .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 

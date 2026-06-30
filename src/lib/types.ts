@@ -11,6 +11,9 @@ export interface Match {
   actualAway?: number;
   homeTeamPlaceholder?: string;
   awayTeamPlaceholder?: string;
+  decidedBy?: 'FT' | 'AET' | 'PEN'; // how a knockout match was decided
+  homePenalty?: number; // goals scored in shootout
+  awayPenalty?: number;
 }
 
 export interface Prediction {

@@ -4,7 +4,7 @@ import { Prediction, SpecialPrediction, SpecialPredictionType } from "./types";
 import { calculatePoints, calculateKnockoutPoints, PredictionOutcome } from "./scoring";
 
 const PREDICTIONS_RANGE = "Predictions!A2:F";
-const MATCHES_RANGE = "Matches!A2:I";
+const MATCHES_RANGE = "Matches!A2:L";
 const CONFIG_RANGE = "Config!A2:C";
 
 export function getSheetId(): string {
@@ -133,7 +133,16 @@ export async function upsertPrediction(
   }
 }
 
-export async function getMatchResultsMap(): Promise<Record<string, { home: string; away: string; winner: string }>> {
+export interface MatchResultRow {
+  home: string;
+  away: string;
+  winner: string;
+  decidedBy: string;
+  homePenalty: string;
+  awayPenalty: string;
+}
+
+export async function getMatchResultsMap(): Promise<Record<string, MatchResultRow>> {
   try {
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
@@ -144,12 +153,19 @@ export async function getMatchResultsMap(): Promise<Record<string, { home: strin
     });
 
     const rows = response.data.values ?? [];
-    const map: Record<string, { home: string; away: string; winner: string }> = {};
+    const map: Record<string, MatchResultRow> = {};
 
     rows.forEach((row) => {
       const matchId = row[0];
       if (!matchId) return;
-      map[matchId] = { home: row[6] ?? "", away: row[7] ?? "", winner: row[8] ?? "" };
+      map[matchId] = {
+        home: row[6] ?? "",
+        away: row[7] ?? "",
+        winner: row[8] ?? "",
+        decidedBy: row[9] ?? "",
+        homePenalty: row[10] ?? "",
+        awayPenalty: row[11] ?? "",
+      };
     });
 
     return map;
@@ -160,11 +176,19 @@ export async function getMatchResultsMap(): Promise<Record<string, { home: strin
   }
 }
 
+export async function getMatchResult(matchId: string): Promise<MatchResultRow | null> {
+  const map = await getMatchResultsMap();
+  return map[matchId] ?? null;
+}
+
 export async function setMatchResult(
   matchId: string,
   homeScore: number,
   awayScore: number,
-  winner?: "home" | "away" | null
+  winner?: "home" | "away" | null,
+  decidedBy?: "FT" | "AET" | "PEN",
+  homePenalty?: number,
+  awayPenalty?: number
 ): Promise<void> {
   try {
     const sheets = getSheetsClient();
@@ -186,10 +210,19 @@ export async function setMatchResult(
 
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `Matches!G${sheetRow}:I${sheetRow}`,
+      range: `Matches!G${sheetRow}:L${sheetRow}`,
       valueInputOption: "RAW",
       requestBody: {
-        values: [[homeScore, awayScore, winner ?? ""]],
+        values: [
+          [
+            homeScore,
+            awayScore,
+            winner ?? "",
+            decidedBy ?? "",
+            homePenalty ?? "",
+            awayPenalty ?? "",
+          ],
+        ],
       },
     });
   } catch (error) {

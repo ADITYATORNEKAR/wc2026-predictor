@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MATCHES } from "@/lib/matches";
 import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
 import { getMatchResultsMap } from "@/lib/sheets";
+import { Match } from "@/lib/types";
 
 export async function GET() {
   const allMatches = [...MATCHES, ...KNOCKOUT_MATCHES];
@@ -17,6 +18,9 @@ export async function GET() {
         ...match,
         actualHome: Number(result.home),
         actualAway: Number(result.away),
+        decidedBy: (result.decidedBy || undefined) as Match["decidedBy"],
+        homePenalty: result.homePenalty === "" ? undefined : Number(result.homePenalty),
+        awayPenalty: result.awayPenalty === "" ? undefined : Number(result.awayPenalty),
       };
     });
 

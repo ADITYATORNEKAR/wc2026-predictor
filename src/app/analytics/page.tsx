@@ -24,6 +24,12 @@ interface WCStats {
     winnerRank: number;
     loserRank: number;
   } | null;
+  knockoutBreakdown: {
+    total: number;
+    ninetyMins: number;
+    extraTime: number;
+    penalties: number;
+  };
 }
 
 interface PredictionAnalytics {
@@ -456,6 +462,84 @@ export default function AnalyticsPage() {
           </div>
         )}
       </section>
+
+      {/* ── Section 3b: How Matches Were Decided ── */}
+      {!statsLoading && wcStats && wcStats.knockoutBreakdown.total > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#FFD700]">
+            ⏱️ How Matches Were Decided
+          </h2>
+
+          {(() => {
+            const { total, ninetyMins, extraTime, penalties } = wcStats.knockoutBreakdown;
+            const ftPct = Math.round((ninetyMins / total) * 100);
+            const aetPct = Math.round((extraTime / total) * 100);
+            const penPct = 100 - ftPct - aetPct;
+
+            return (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="rounded-lg border border-[#00A651] bg-[#002820] p-4 text-center">
+                    <div className="text-xs uppercase tracking-wide text-[#94a3b8]">⚽ Full Time</div>
+                    <div className="mt-1 text-4xl font-bold text-[#00A651]">{ninetyMins}</div>
+                    <p className="mt-1 text-xs text-[#94a3b8]">
+                      match{ninetyMins === 1 ? "" : "es"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-[#FFD700] bg-[#002820] p-4 text-center">
+                    <div className="text-xs uppercase tracking-wide text-[#94a3b8]">⏰ Extra Time</div>
+                    <div className="mt-1 text-4xl font-bold text-[#FFD700]">{extraTime}</div>
+                    <p className="mt-1 text-xs text-[#94a3b8]">
+                      match{extraTime === 1 ? "" : "es"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-orange-500 bg-[#002820] p-4 text-center">
+                    <div className="text-xs uppercase tracking-wide text-[#94a3b8]">🎯 Penalties</div>
+                    <div className="mt-1 text-4xl font-bold text-orange-500">{penalties}</div>
+                    <p className="mt-1 text-xs text-[#94a3b8]">
+                      match{penalties === 1 ? "" : "es"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-lg border border-[#00573F] bg-[#002820] p-4">
+                  <div className="flex h-6 w-full overflow-hidden rounded-full bg-[#001a13]">
+                    {ninetyMins > 0 && (
+                      <div
+                        className="flex items-center justify-center bg-[#00A651] text-[10px] font-semibold text-white"
+                        style={{ width: `${ftPct}%` }}
+                      >
+                        {ftPct >= 10 ? `${ftPct}%` : ""}
+                      </div>
+                    )}
+                    {extraTime > 0 && (
+                      <div
+                        className="flex items-center justify-center bg-[#FFD700] text-[10px] font-semibold text-[#002820]"
+                        style={{ width: `${aetPct}%` }}
+                      >
+                        {aetPct >= 10 ? `${aetPct}%` : ""}
+                      </div>
+                    )}
+                    {penalties > 0 && (
+                      <div
+                        className="flex items-center justify-center bg-orange-500 text-[10px] font-semibold text-white"
+                        style={{ width: `${penPct}%` }}
+                      >
+                        {penPct >= 10 ? `${penPct}%` : ""}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2 flex justify-between text-[10px] text-[#94a3b8]">
+                    <span>⚽ FT {ftPct}%</span>
+                    <span>⏰ AET {aetPct}%</span>
+                    <span>🎯 PEN {penPct}%</span>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </section>
+      )}
 
       {/* ── Section 4: Prediction Breakdown ── */}
       <section className="mt-10">

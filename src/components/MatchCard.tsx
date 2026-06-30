@@ -3,6 +3,7 @@ import { getTeamRank } from "@/lib/rankings";
 import { formatMatchDate } from "@/lib/dateUtils";
 import TeamFlag from "./TeamFlag";
 import PredictionDisplay from "./PredictionDisplay";
+import ScoreDisplay from "./ScoreDisplay";
 
 function RankBadge({ team }: { team: string }) {
   const rank = getTeamRank(team);
@@ -120,8 +121,9 @@ export default function MatchCard({
       )}
 
       {hasResult && (
-        <div className="mt-3 text-center font-[family-name:var(--font-heading)] text-lg tracking-wide text-[#FFD700]">
-          RESULT: {match.actualHome} - {match.actualAway}
+        <div className="mt-3 text-center font-[family-name:var(--font-heading)] text-lg tracking-wide">
+          <span className="text-[#FFD700]">RESULT: </span>
+          <ScoreDisplay match={match} className="text-white" />
         </div>
       )}
 

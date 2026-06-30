@@ -1,7 +1,6 @@
 import Link from "next/link";
-import LiveMatchGrid from "@/components/LiveMatchGrid";
+import KnockoutBracket from "@/components/KnockoutBracket";
 import TopLeaderboard from "@/components/TopLeaderboard";
-import { MATCHES } from "@/lib/matches";
 
 export default function Home() {
   return (
@@ -42,11 +41,11 @@ export default function Home() {
       <section className="bg-[#002820] px-4 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
-            Matches
+            🏆 Knockout Stage
           </h2>
-          <LiveMatchGrid initialMatches={MATCHES} />
+          <KnockoutBracket />
           <p className="mt-4 text-center text-xs text-[#94a3b8]">
-            ⚡ Live scores powered by ESPN
+            ⚡ Results synced from ESPN
           </p>
         </div>
       </section>

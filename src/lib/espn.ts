@@ -32,6 +32,8 @@ export const ESPN_NAME_MAP: Record<string, string> = {
 
 export type MatchStatus = "upcoming" | "live" | "halftime" | "finished";
 
+export type EndedType = "FT" | "AET" | "PEN";
+
 export interface MappedMatch {
   espnId: string;
   homeTeam: string;
@@ -42,6 +44,9 @@ export interface MappedMatch {
   displayClock: string;
   period: number;
   winner: "home" | "away" | null;
+  endedType: EndedType;
+  homeShootout: number | null;
+  awayShootout: number | null;
 }
 
 interface EspnCompetitor {
@@ -49,6 +54,7 @@ interface EspnCompetitor {
   team: { displayName: string; abbreviation: string };
   score: string;
   winner?: boolean;
+  shootoutScore?: number;
 }
 
 interface EspnEvent {
@@ -141,6 +147,9 @@ function mapEvent(event: EspnEvent): MappedMatch | null {
 
   const winner = home.winner ? "home" : away.winner ? "away" : null;
 
+  const endedType: EndedType =
+    status === "STATUS_FINAL_PEN" ? "PEN" : status === "STATUS_FINAL_AET" ? "AET" : "FT";
+
   return {
     espnId: event.id,
     homeTeam: normalizeTeamName(home.team.displayName),
@@ -151,6 +160,9 @@ function mapEvent(event: EspnEvent): MappedMatch | null {
     displayClock: event.status.type.shortDetail,
     period: event.status.period,
     winner,
+    endedType,
+    homeShootout: home.shootoutScore ?? null,
+    awayShootout: away.shootoutScore ?? null,
   };
 }
 

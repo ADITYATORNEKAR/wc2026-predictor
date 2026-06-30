@@ -4,7 +4,7 @@ import { getTeamRank } from "@/lib/rankings";
 
 export const revalidate = 300;
 
-const MATCHES_RANGE = "Matches!A2:H";
+const MATCHES_RANGE = "Matches!A2:L";
 
 function hasResult(row: string[]): boolean {
   const h = row[6];
@@ -41,9 +41,14 @@ export async function GET() {
     } | null = null;
     let biggestUpsetMargin = 0;
 
+    let ninetyMins = 0;
+    let extraTime = 0;
+    let penalties = 0;
+
     for (const row of rows) {
       if (!hasResult(row)) continue;
 
+      const matchId = row[0] ?? "";
       const homeTeam = row[1] ?? "";
       const awayTeam = row[2] ?? "";
       const homeScore = Number(row[6]);
@@ -72,11 +77,25 @@ export async function GET() {
           }
         }
       }
+
+      if (matchId.startsWith("k")) {
+        const decidedBy = row[9] ?? "";
+        if (decidedBy === "FT") ninetyMins++;
+        else if (decidedBy === "AET") extraTime++;
+        else if (decidedBy === "PEN") penalties++;
+      }
     }
 
     const goalsPerMatch = matchesPlayed > 0
       ? (totalGoals / matchesPlayed).toFixed(1)
       : "0.0";
+
+    const knockoutBreakdown = {
+      total: ninetyMins + extraTime + penalties,
+      ninetyMins,
+      extraTime,
+      penalties,
+    };
 
     return NextResponse.json({
       matchesPlayed,
@@ -84,6 +103,7 @@ export async function GET() {
       goalsPerMatch,
       highestScoringMatch,
       biggestUpset,
+      knockoutBreakdown,
     });
   } catch (error) {
     return NextResponse.json(

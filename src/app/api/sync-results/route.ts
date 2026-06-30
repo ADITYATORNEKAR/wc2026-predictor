@@ -76,13 +76,19 @@ export async function GET(request: NextRequest) {
             : null
         : espnMatch.winner;
 
+      const homePenalty = isFlipped ? espnMatch.awayShootout : espnMatch.homeShootout;
+      const awayPenalty = isFlipped ? espnMatch.homeShootout : espnMatch.awayShootout;
+
       try {
         const isKnockout = match.id.startsWith("k");
         await setMatchResult(
           match.id,
           homeScore as number,
           awayScore as number,
-          isKnockout ? winner : undefined
+          isKnockout ? winner : undefined,
+          isKnockout ? espnMatch.endedType : undefined,
+          isKnockout && espnMatch.endedType === "PEN" ? (homePenalty as number) : undefined,
+          isKnockout && espnMatch.endedType === "PEN" ? (awayPenalty as number) : undefined
         );
         await recalculatePoints(match.id);
         synced++;
