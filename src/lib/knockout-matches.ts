@@ -20,14 +20,14 @@ export const KNOCKOUT_MATCHES: Match[] = [
   { id: 'k16', homeTeam: 'Australia',       awayTeam: 'Egypt',                       homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R32', matchDate: '2026-07-03T18:00:00Z' },
 
   // ── ROUND OF 16 ─────────────────────────────────────────
-  { id: 'k17', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 1',  awayTeamPlaceholder: 'Winner Match 2',  group: '', stage: 'R16', matchDate: '2026-07-09T15:00:00Z' },
-  { id: 'k18', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 3',  awayTeamPlaceholder: 'Winner Match 4',  group: '', stage: 'R16', matchDate: '2026-07-09T19:00:00Z' },
-  { id: 'k19', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 5',  awayTeamPlaceholder: 'Winner Match 6',  group: '', stage: 'R16', matchDate: '2026-07-09T22:00:00Z' },
-  { id: 'k20', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 7',  awayTeamPlaceholder: 'Winner Match 8',  group: '', stage: 'R16', matchDate: '2026-07-10T15:00:00Z' },
-  { id: 'k21', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 9',  awayTeamPlaceholder: 'Winner Match 10', group: '', stage: 'R16', matchDate: '2026-07-10T19:00:00Z' },
-  { id: 'k22', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 11', awayTeamPlaceholder: 'Winner Match 12', group: '', stage: 'R16', matchDate: '2026-07-10T22:00:00Z' },
-  { id: 'k23', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 13', awayTeamPlaceholder: 'Winner Match 14', group: '', stage: 'R16', matchDate: '2026-07-11T15:00:00Z' },
-  { id: 'k24', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 15', awayTeamPlaceholder: 'Winner Match 16', group: '', stage: 'R16', matchDate: '2026-07-11T19:00:00Z' },
+  { id: 'k17', homeTeam: 'Canada',        awayTeam: 'Morocco',  homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-04T17:00:00Z' },
+  { id: 'k18', homeTeam: 'Paraguay',      awayTeam: 'France',   homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-04T21:00:00Z' },
+  { id: 'k19', homeTeam: 'Brazil',        awayTeam: 'Norway',   homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-05T20:00:00Z' },
+  { id: 'k20', homeTeam: 'Mexico',        awayTeam: 'England',  homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-06T00:00:00Z' },
+  { id: 'k21', homeTeam: 'Portugal',      awayTeam: 'Spain',    homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-06T19:00:00Z' },
+  { id: 'k22', homeTeam: 'United States', awayTeam: 'Belgium',  homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-07T00:00:00Z' },
+  { id: 'k23', homeTeam: 'Argentina',     awayTeam: 'Egypt',    homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-07T16:00:00Z' },
+  { id: 'k24', homeTeam: 'Switzerland',   awayTeam: 'Colombia', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-08T00:00:00Z' },
 
   // ── QUARTER-FINALS ──────────────────────────────────────
   { id: 'k25', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 17', awayTeamPlaceholder: 'Winner Match 18', group: '', stage: 'QF', matchDate: '2026-07-14T15:00:00Z' },
