@@ -7,11 +7,10 @@ import { Match, Prediction, Stage } from "@/lib/types";
 import { PredictionOutcome } from "@/lib/scoring";
 import { getTeamRank } from "@/lib/rankings";
 import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
-import { hasMatchStarted, isWithin48Hours, timeUntilMatch, formatMatchDateShort } from "@/lib/dateUtils";
+import { hasMatchStarted, formatMatchDateShort } from "@/lib/dateUtils";
 import TeamFlag from "@/components/TeamFlag";
 import PredictionDisplay from "@/components/PredictionDisplay";
 
-const PREDICTION_WINDOW_HOURS = 48;
 const CONSOLATION_MATCH_IDS = new Set(["k1", "k4"]);
 
 const TABS: { label: string; stages: Stage[] }[] = [
@@ -65,32 +64,28 @@ function CrowdBar({ match, counts, selection }: { match: Match; counts: PickCoun
   );
 }
 
-function PredictionWindowBadge({ match }: { match: Match }) {
-  if (!match.homeTeam || !match.awayTeam) {
-    return (
-      <span className="rounded-full bg-[#00573F] px-2 py-0.5 text-[10px] font-semibold text-[#94a3b8]">
-        Predictions open 48hrs before kickoff
-      </span>
-    );
-  }
-
+function PredictionWindowBadge({ match, roundUnlocked }: { match: Match; roundUnlocked: boolean }) {
   if (hasMatchStarted(match.matchDate)) {
     return <span className="rounded-full bg-gray-600 px-2 py-0.5 text-[10px] font-semibold text-white">Predictions Closed</span>;
   }
 
-  if (match.stage === "R32" || isWithin48Hours(match.matchDate)) {
-    return <span className="rounded-full bg-[#00A651] px-2 py-0.5 text-[10px] font-semibold text-white">Predictions Open</span>;
+  if (!roundUnlocked) {
+    return (
+      <span className="rounded-full bg-[#00573F] px-2 py-0.5 text-[10px] font-semibold text-[#94a3b8]">
+        🔒 Opens when previous round is complete
+      </span>
+    );
   }
 
-  const windowOpenIso = new Date(
-    new Date(match.matchDate).getTime() - PREDICTION_WINDOW_HOURS * 60 * 60 * 1000
-  ).toISOString();
+  if (!match.homeTeam || !match.awayTeam) {
+    return (
+      <span className="rounded-full bg-[#00573F] px-2 py-0.5 text-[10px] font-semibold text-[#94a3b8]">
+        Teams TBD
+      </span>
+    );
+  }
 
-  return (
-    <span className="rounded-full bg-[#00573F] px-2 py-0.5 text-[10px] font-semibold text-[#94a3b8]">
-      Predictions open in {timeUntilMatch(windowOpenIso)}
-    </span>
-  );
+  return <span className="rounded-full bg-[#00A651] px-2 py-0.5 text-[10px] font-semibold text-white">Predictions Open</span>;
 }
 
 const EMAIL_STORAGE_KEY = "wc2026_email";
@@ -107,6 +102,7 @@ export default function PredictKnockoutsPage() {
   const [predictionsLoading, setPredictionsLoading] = useState(true);
   const [predictionsError, setPredictionsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [unlockedRounds, setUnlockedRounds] = useState<Stage[]>(["R32"]);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
@@ -136,6 +132,11 @@ export default function PredictKnockoutsPage() {
       .then((data: Match[]) => {
         setMatchesData(data.filter((m) => m.stage !== "Group"));
       })
+      .catch(() => {});
+
+    fetch("/api/knockout-status")
+      .then((res) => res.json())
+      .then((data) => setUnlockedRounds(data.unlockedRounds ?? ["R32"]))
       .catch(() => {});
   }, []);
 
@@ -243,10 +244,6 @@ export default function PredictKnockoutsPage() {
         View all my predictions →
       </Link>
 
-      <div className="mb-6 rounded-lg border border-[#00A651] bg-[#002820] p-4 text-center text-sm text-white">
-        ⏳ Knockout predictions unlock 48 hours before each match kickoff
-      </div>
-
       {activeTab === 0 && (
         <div className="mb-6 rounded-lg border border-[#2d6a4f] bg-[#1b4332] px-4 py-3 text-center text-sm font-semibold text-[#FFD700]">
           🏆 Round of 32 has begun! Make your picks before each match kicks off.
@@ -264,30 +261,35 @@ export default function PredictKnockoutsPage() {
       )}
 
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[#00573F] pb-2">
-        {TABS.map((t, index) => (
-          <button
-            key={t.label}
-            onClick={() => setActiveTab(index)}
-            className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-              activeTab === index
-                ? "bg-[#00A651] text-white"
-                : "bg-[#002820] text-[#94a3b8] hover:text-white"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        {TABS.map((t, index) => {
+          const isTabUnlocked = t.stages.some((s) => unlockedRounds.includes(s));
+          return (
+            <button
+              key={t.label}
+              onClick={() => setActiveTab(index)}
+              className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
+                activeTab === index
+                  ? "bg-[#00A651] text-white"
+                  : isTabUnlocked
+                    ? "bg-[#002820] text-[#94a3b8] hover:text-white"
+                    : "bg-[#002820] text-[#94a3b8]/40"
+              }`}
+            >
+              {!isTabUnlocked && <span className="mr-1">🔒</span>}
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {tabMatches.map((match) => {
           const isUnrevealed = !match.homeTeam || !match.awayTeam;
-          const isR32 = match.stage === "R32";
           const isConsolation = CONSOLATION_MATCH_IDS.has(match.id);
           const started = hasMatchStarted(match.matchDate);
           const isPast = started || lockedMatchIds.has(match.id);
-          const isWithinWindow = isWithin48Hours(match.matchDate);
-          const predictionsOpen = !isUnrevealed && !isPast && (isR32 || isWithinWindow);
+          const roundUnlocked = unlockedRounds.includes(match.stage);
+          const predictionsOpen = !isUnrevealed && !isPast && roundUnlocked;
 
           const rawPrediction = userPredictions.get(match.id);
           const existingPrediction = rawPrediction?.prediction === "draw" ? undefined : rawPrediction;
@@ -303,7 +305,7 @@ export default function PredictKnockoutsPage() {
 
               <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
                 <div className="mb-3 flex justify-center">
-                  <PredictionWindowBadge match={match} />
+                  <PredictionWindowBadge match={match} roundUnlocked={roundUnlocked} />
                 </div>
 
                 {showLockedState ? (
