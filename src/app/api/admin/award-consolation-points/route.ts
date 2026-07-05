@@ -8,17 +8,13 @@ const SPECIAL_PREDICTIONS_RANGE = "SpecialPredictions!A2:G";
 const CONSOLATION_MATCHES = ["k1", "k4"];
 
 export async function POST(request: NextRequest) {
-
-  const adminKey = request.nextUrl.searchParams.get("adminKey");
-  if (!adminKey || adminKey !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const matchIdsParam = request.nextUrl.searchParams.get("matchIds");
     const matchIds = matchIdsParam
       ? matchIdsParam.split(",").map((id) => id.trim()).filter(Boolean)
       : CONSOLATION_MATCHES;
+
+    const matchIdSet = new Set(matchIds);
 
     const sheets = getSheetsClient();
     const spreadsheetId = getSheetId();
@@ -39,24 +35,28 @@ export async function POST(request: NextRequest) {
     );
     const allUsers = new Set([...predUsers, ...specialUsers]);
 
-    const existingMap = new Map<string, number>();
-    predRows.forEach((row, index) => {
-      existingMap.set(`${row[1]}|${row[2]}`, index);
-    });
-
-    const rowsToAppend: string[][] = [];
+    // Track which userName|matchId combos already have at least one prediction row
+    const coveredKeys = new Set<string>();
     const pointsUpdates: { range: string; values: (string | number)[][] }[] = [];
 
+    // Update points=3 on EVERY existing row that belongs to one of these matches
+    predRows.forEach((row, index) => {
+      const matchId = row[2] as string;
+      const userName = row[1] as string;
+      if (!matchIdSet.has(matchId)) return;
+
+      coveredKeys.add(`${userName}|${matchId}`);
+      pointsUpdates.push({
+        range: `Predictions!E${index + 2}`,
+        values: [[3]],
+      });
+    });
+
+    // Create rows for users who have no prediction at all for these matches
+    const rowsToAppend: string[][] = [];
     for (const userName of allUsers) {
       for (const matchId of matchIds) {
-        const existingIndex = existingMap.get(`${userName}|${matchId}`);
-
-        if (existingIndex !== undefined) {
-          pointsUpdates.push({
-            range: `Predictions!E${existingIndex + 2}`,
-            values: [[3]],
-          });
-        } else {
+        if (!coveredKeys.has(`${userName}|${matchId}`)) {
           rowsToAppend.push([
             randomUUID(),
             userName,
