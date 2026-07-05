@@ -22,7 +22,7 @@ export const KNOCKOUT_MATCHES: Match[] = [
   // ── ROUND OF 16 ─────────────────────────────────────────
   { id: 'k17', homeTeam: 'Canada',        awayTeam: 'Morocco',  homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-04T17:00:00Z' },
   { id: 'k18', homeTeam: 'Paraguay',      awayTeam: 'France',   homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-04T21:00:00Z' },
-  { id: 'k19', homeTeam: 'Brazil',        awayTeam: 'Norway',   homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-05T20:00:00Z' },
+  { id: 'k19', homeTeam: 'Brazil',        awayTeam: 'Norway',   homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-05T21:38:00Z' },
   { id: 'k20', homeTeam: 'Mexico',        awayTeam: 'England',  homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-06T00:00:00Z' },
   { id: 'k21', homeTeam: 'Portugal',      awayTeam: 'Spain',    homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-06T19:00:00Z' },
   { id: 'k22', homeTeam: 'United States', awayTeam: 'Belgium',  homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-07T00:00:00Z' },
