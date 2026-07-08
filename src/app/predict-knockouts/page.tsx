@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MatchCard from "@/components/MatchCard";
-import { Match, Prediction, Stage } from "@/lib/types";
+import { Match, Prediction } from "@/lib/types";
 import { PredictionOutcome } from "@/lib/scoring";
 import { getTeamRank } from "@/lib/rankings";
 import { KNOCKOUT_MATCHES } from "@/lib/knockout-matches";
@@ -13,12 +13,12 @@ import PredictionDisplay from "@/components/PredictionDisplay";
 
 const CONSOLATION_MATCH_IDS = new Set(["k1", "k4"]);
 
-const TABS: { label: string; stages: Stage[] }[] = [
-  { label: "Round of 32", stages: ["R32"] },
-  { label: "Round of 16", stages: ["R16"] },
+const TABS: { label: string; stages: string[] }[] = [
+  { label: "Round of 32",    stages: ["R32"] },
+  { label: "Round of 16",    stages: ["R16"] },
   { label: "Quarter Finals", stages: ["QF"] },
-  { label: "Semi Finals", stages: ["SF"] },
-  { label: "Final", stages: ["Final", "3rd"] },
+  { label: "Semi Finals",    stages: ["SF"] },
+  { label: "Final",          stages: ["Final", "3rd"] },
 ];
 
 function getOutcomeRank(outcome: PredictionOutcome, match: Match): number | undefined {
@@ -64,23 +64,15 @@ function CrowdBar({ match, counts, selection }: { match: Match; counts: PickCoun
   );
 }
 
-function PredictionWindowBadge({ match, roundUnlocked }: { match: Match; roundUnlocked: boolean }) {
+function PredictionWindowBadge({ match }: { match: Match }) {
   if (hasMatchStarted(match.matchDate)) {
     return <span className="rounded-full bg-gray-600 px-2 py-0.5 text-[10px] font-semibold text-white">Predictions Closed</span>;
-  }
-
-  if (!roundUnlocked) {
-    return (
-      <span className="rounded-full bg-[#00573F] px-2 py-0.5 text-[10px] font-semibold text-[#94a3b8]">
-        🔒 Opens when previous round is complete
-      </span>
-    );
   }
 
   if (!match.homeTeam || !match.awayTeam) {
     return (
       <span className="rounded-full bg-[#00573F] px-2 py-0.5 text-[10px] font-semibold text-[#94a3b8]">
-        Teams TBD
+        Teams TBD — coming soon
       </span>
     );
   }
@@ -102,7 +94,6 @@ export default function PredictKnockoutsPage() {
   const [predictionsLoading, setPredictionsLoading] = useState(true);
   const [predictionsError, setPredictionsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [unlockedRounds, setUnlockedRounds] = useState<Stage[]>(["R32"]);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
@@ -134,10 +125,6 @@ export default function PredictKnockoutsPage() {
       })
       .catch(() => {});
 
-    fetch("/api/knockout-status")
-      .then((res) => res.json())
-      .then((data) => setUnlockedRounds(data.unlockedRounds ?? ["R32"]))
-      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -230,7 +217,7 @@ export default function PredictKnockoutsPage() {
 
   const tab = TABS[activeTab];
   const tabMatches = matchesData
-    .filter((m) => tab.stages.includes(m.stage))
+    .filter((m) => (tab.stages as string[]).includes(m.stage))
     .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
   return (
@@ -261,25 +248,19 @@ export default function PredictKnockoutsPage() {
       )}
 
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[#00573F] pb-2">
-        {TABS.map((t, index) => {
-          const isTabUnlocked = t.stages.some((s) => unlockedRounds.includes(s));
-          return (
-            <button
-              key={t.label}
-              onClick={() => setActiveTab(index)}
-              className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-                activeTab === index
-                  ? "bg-[#00A651] text-white"
-                  : isTabUnlocked
-                    ? "bg-[#002820] text-[#94a3b8] hover:text-white"
-                    : "bg-[#002820] text-[#94a3b8]/40"
-              }`}
-            >
-              {!isTabUnlocked && <span className="mr-1">🔒</span>}
-              {t.label}
-            </button>
-          );
-        })}
+        {TABS.map((t, index) => (
+          <button
+            key={t.label}
+            onClick={() => setActiveTab(index)}
+            className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === index
+                ? "bg-[#00A651] text-white"
+                : "bg-[#002820] text-[#94a3b8] hover:text-white"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -288,8 +269,7 @@ export default function PredictKnockoutsPage() {
           const isConsolation = CONSOLATION_MATCH_IDS.has(match.id);
           const started = hasMatchStarted(match.matchDate);
           const isPast = started || lockedMatchIds.has(match.id);
-          const roundUnlocked = unlockedRounds.includes(match.stage);
-          const predictionsOpen = !isUnrevealed && !isPast && roundUnlocked;
+          const predictionsOpen = !isUnrevealed && !isPast;
 
           const rawPrediction = userPredictions.get(match.id);
           const existingPrediction = rawPrediction?.prediction === "draw" ? undefined : rawPrediction;
@@ -305,7 +285,7 @@ export default function PredictKnockoutsPage() {
 
               <div className="rounded-lg border border-[#00573F] bg-[#002820] p-4">
                 <div className="mb-3 flex justify-center">
-                  <PredictionWindowBadge match={match} roundUnlocked={roundUnlocked} />
+                  <PredictionWindowBadge match={match} />
                 </div>
 
                 {showLockedState ? (

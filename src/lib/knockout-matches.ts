@@ -30,10 +30,10 @@ export const KNOCKOUT_MATCHES: Match[] = [
   { id: 'k24', homeTeam: 'Switzerland',   awayTeam: 'Colombia', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'R16', matchDate: '2026-07-08T00:00:00Z' },
 
   // ── QUARTER-FINALS ──────────────────────────────────────
-  { id: 'k25', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 17', awayTeamPlaceholder: 'Winner Match 18', group: '', stage: 'QF', matchDate: '2026-07-14T15:00:00Z' },
-  { id: 'k26', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 19', awayTeamPlaceholder: 'Winner Match 20', group: '', stage: 'QF', matchDate: '2026-07-14T19:00:00Z' },
-  { id: 'k27', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 21', awayTeamPlaceholder: 'Winner Match 22', group: '', stage: 'QF', matchDate: '2026-07-15T15:00:00Z' },
-  { id: 'k28', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 23', awayTeamPlaceholder: 'Winner Match 24', group: '', stage: 'QF', matchDate: '2026-07-15T19:00:00Z' },
+  { id: 'k25', homeTeam: 'France',    awayTeam: 'Morocco',     homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'QF', matchDate: '2026-07-09T20:00:00Z' },
+  { id: 'k26', homeTeam: 'Spain',     awayTeam: 'Belgium',     homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'QF', matchDate: '2026-07-10T19:00:00Z' },
+  { id: 'k27', homeTeam: 'Norway',    awayTeam: 'England',     homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'QF', matchDate: '2026-07-11T21:00:00Z' },
+  { id: 'k28', homeTeam: 'Argentina', awayTeam: 'Switzerland', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'QF', matchDate: '2026-07-12T00:00:00Z' },
 
   // ── SEMI-FINALS ─────────────────────────────────────────
   { id: 'k29', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 25', awayTeamPlaceholder: 'Winner Match 26', group: '', stage: 'SF', matchDate: '2026-07-18T19:00:00Z' },
