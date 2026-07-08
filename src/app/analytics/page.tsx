@@ -88,22 +88,32 @@ export default function AnalyticsPage() {
   const [wcStats, setWcStats] = useState<WCStats | null>(null);
   const [predAnalytics, setPredAnalytics] = useState<PredictionAnalytics | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [specialPredictions, setSpecialPredictions] = useState<SpecialPrediction[]>([]);
   const [leagueSummaries, setLeagueSummaries] = useState<LeagueSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchStats = (showRefreshing = false) => {
+    if (showRefreshing) setRefreshing(true);
+    const t = Date.now();
     Promise.all([
-      fetch("/api/world-cup-stats").then((r) => r.json()),
-      fetch("/api/prediction-analytics").then((r) => r.json()),
+      fetch(`/api/world-cup-stats?t=${t}`).then((r) => r.json()),
+      fetch(`/api/prediction-analytics?t=${t}`).then((r) => r.json()),
     ])
       .then(([wcData, predData]) => {
         if (!wcData.error) setWcStats(wcData);
         if (!predData.error) setPredAnalytics(predData);
       })
       .catch(() => {})
-      .finally(() => setStatsLoading(false));
+      .finally(() => {
+        setStatsLoading(false);
+        setRefreshing(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchStats();
 
     const load = async () => {
       try {
@@ -219,7 +229,17 @@ export default function AnalyticsPage() {
       <p className="mt-1 text-sm text-[#94a3b8]">Powered by Citizens Financial Group</p>
 
       {/* ── Section 1: Tournament Stats Banner ── */}
-      <div className="mt-6 overflow-hidden rounded-xl border border-[#00573F] bg-[#002820]">
+      <div className="mt-6 flex items-center justify-between">
+        <span className="text-xs text-[#94a3b8]">Live stats</span>
+        <button
+          onClick={() => fetchStats(true)}
+          disabled={refreshing}
+          className="flex items-center gap-1 text-sm font-semibold text-[#FFD700] transition hover:text-[#FFD700]/70 disabled:opacity-50"
+        >
+          <span className={refreshing ? "animate-spin" : ""}>↻</span> Refresh
+        </button>
+      </div>
+      <div className="mt-2 overflow-hidden rounded-xl border border-[#00573F] bg-[#002820]">
         {statsLoading ? (
           <div className="flex items-center justify-center gap-8 px-6 py-6 sm:gap-12">
             {[0, 1, 2].map((i) => (

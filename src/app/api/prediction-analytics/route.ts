@@ -6,7 +6,7 @@ import {
 } from "@/lib/sheets";
 import { getResult, PredictionOutcome } from "@/lib/scoring";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 const PREDICTIONS_RANGE = "Predictions!A2:F";
 const MATCHES_RANGE = "Matches!A2:H";
@@ -164,17 +164,10 @@ export async function GET() {
       ? leaderboard[0].totalPoints - leaderboard[leaderboard.length - 1].totalPoints
       : 0;
 
-    return NextResponse.json({
-      totalPredictions,
-      usersParticipating,
-      matchesPredicted,
-      overallAccuracy,
-      outcomeDistribution,
-      hardestMatch,
-      hottestPredictor,
-      currentLeader,
-      pointsGap,
-    });
+    return NextResponse.json(
+      { totalPredictions, usersParticipating, matchesPredicted, overallAccuracy, outcomeDistribution, hardestMatch, hottestPredictor, currentLeader, pointsGap },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error) {
     return NextResponse.json(
       {

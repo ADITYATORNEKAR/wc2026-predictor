@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSheetsClient, getSheetId } from "@/lib/sheets";
 import { getTeamRank } from "@/lib/rankings";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 const MATCHES_RANGE = "Matches!A2:L";
 
@@ -97,14 +97,10 @@ export async function GET() {
       penalties,
     };
 
-    return NextResponse.json({
-      matchesPlayed,
-      totalGoals,
-      goalsPerMatch,
-      highestScoringMatch,
-      biggestUpset,
-      knockoutBreakdown,
-    });
+    return NextResponse.json(
+      { matchesPlayed, totalGoals, goalsPerMatch, highestScoringMatch, biggestUpset, knockoutBreakdown },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch stats" },
