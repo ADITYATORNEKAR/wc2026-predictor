@@ -27,6 +27,27 @@ export function formatMatchDateShort(isoString: string): string {
 }
 // Example output: "Jun 11, 3:00 PM ET"
 
+export function formatMatchDateOnly(isoString: string): string {
+  return new Date(isoString).toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+// Example output: "Jun 11"
+
+export function formatMatchTimeOnly(isoString: string): string {
+  return (
+    new Date(isoString).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }) + ' ET'
+  );
+}
+// Example output: "3:00 PM ET"
+
 export function hasMatchStarted(isoString: string): boolean {
   return new Date() > new Date(isoString);
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import KnockoutBracket from "@/components/KnockoutBracket";
+import HomeBracket from "@/components/HomeBracket";
 import TopLeaderboard from "@/components/TopLeaderboard";
 
 export default function Home() {
@@ -29,24 +29,24 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="bg-[#002820] px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
+            🏆 Knockout Stage
+          </h2>
+          <HomeBracket />
+          <p className="mt-4 text-center text-xs text-[#94a3b8]">
+            ⚡ Results synced from ESPN
+          </p>
+        </div>
+      </section>
+
       <section className="bg-[#002820] px-4 py-8">
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
             Top Predictors
           </h2>
           <TopLeaderboard />
-        </div>
-      </section>
-
-      <section className="bg-[#002820] px-4 py-16">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
-            🏆 Knockout Stage
-          </h2>
-          <KnockoutBracket />
-          <p className="mt-4 text-center text-xs text-[#94a3b8]">
-            ⚡ Results synced from ESPN
-          </p>
         </div>
       </section>
     </div>
