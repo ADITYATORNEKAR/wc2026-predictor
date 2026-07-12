@@ -14,11 +14,11 @@ import PredictionDisplay from "@/components/PredictionDisplay";
 const CONSOLATION_MATCH_IDS = new Set(["k1", "k4"]);
 
 const TABS: { label: string; stages: string[] }[] = [
-  { label: "Round of 32",    stages: ["R32"] },
-  { label: "Round of 16",    stages: ["R16"] },
-  { label: "Quarter Finals", stages: ["QF"] },
   { label: "Semi Finals",    stages: ["SF"] },
   { label: "Final",          stages: ["Final", "3rd"] },
+  { label: "Quarter Finals", stages: ["QF"] },
+  { label: "Round of 16",    stages: ["R16"] },
+  { label: "Round of 32",    stages: ["R32"] },
 ];
 
 function getOutcomeRank(outcome: PredictionOutcome, match: Match): number | undefined {
@@ -231,9 +231,9 @@ export default function PredictKnockoutsPage() {
         View all my predictions →
       </Link>
 
-      {activeTab === 0 && (
+      {tab.label === "Semi Finals" && (
         <div className="mb-6 rounded-lg border border-[#2d6a4f] bg-[#1b4332] px-4 py-3 text-center text-sm font-semibold text-[#FFD700]">
-          🏆 Round of 32 has begun! Make your picks before each match kicks off.
+          🏆 Semi Finals are here! France vs Spain &amp; England vs Argentina — make your picks now!
         </div>
       )}
 
@@ -248,19 +248,44 @@ export default function PredictKnockoutsPage() {
       )}
 
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[#00573F] pb-2">
-        {TABS.map((t, index) => (
-          <button
-            key={t.label}
-            onClick={() => setActiveTab(index)}
-            className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-              activeTab === index
-                ? "bg-[#00A651] text-white"
-                : "bg-[#002820] text-[#94a3b8] hover:text-white"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        {TABS.map((t, index) => {
+          const isSF = t.label === "Semi Finals";
+          const isActive = activeTab === index;
+
+          if (isSF) {
+            return (
+              <button
+                key={t.label}
+                onClick={() => setActiveTab(index)}
+                className={`rounded-md px-4 py-2 text-base font-bold transition ${
+                  isActive ? "sf-tab-glow" : "sf-tab-muted"
+                }`}
+                style={{
+                  background: isActive
+                    ? "linear-gradient(135deg, #FFD700, #FFA500)"
+                    : "linear-gradient(135deg, rgba(255,215,0,0.35), rgba(255,165,0,0.35))",
+                  color: isActive ? "#003B2B" : "#FFD700",
+                }}
+              >
+                🏆 {t.label}
+              </button>
+            );
+          }
+
+          return (
+            <button
+              key={t.label}
+              onClick={() => setActiveTab(index)}
+              className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
+                isActive
+                  ? "bg-[#00A651] text-white"
+                  : "bg-[#002820] text-[#94a3b8] hover:text-white"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

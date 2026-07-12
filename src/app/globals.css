@@ -17,3 +17,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes sfTabPulse {
+  0%, 100% { box-shadow: 0 0 6px 2px rgba(255, 215, 0, 0.5); }
+  50% { box-shadow: 0 0 18px 6px rgba(255, 215, 0, 0.9); }
+}
+
+.sf-tab-glow {
+  animation: sfTabPulse 2s ease-in-out infinite;
+}
+
+.sf-tab-muted {
+  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.4);
+}
