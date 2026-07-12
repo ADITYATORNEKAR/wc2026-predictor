@@ -47,9 +47,6 @@ export default function RootLayout({
               <Link href="/" className="text-white transition hover:text-[#00A651]">
                 Home
               </Link>
-              <Link href="/predict-groups" className="text-white transition hover:text-[#00A651]">
-                Group Stage
-              </Link>
               <Link href="/predict-knockouts" className="text-white transition hover:text-[#00A651]">
                 Knockouts
               </Link>
@@ -59,20 +56,17 @@ export default function RootLayout({
               <Link href="/my-predictions" className="text-white transition hover:text-[#00A651]">
                 My Predictions
               </Link>
-              <Link href="/standings" className="text-white transition hover:text-[#00A651]">
-                Standings
+              <Link href="/leaderboard" className="text-white transition hover:text-[#00A651]">
+                Leaderboard
               </Link>
               <Link href="/leagues" className="text-white transition hover:text-[#00A651]">
                 Leagues
               </Link>
-              <Link href="/bracket" className="text-white transition hover:text-[#00A651]">
-                Bracket
-              </Link>
-              <Link href="/leaderboard" className="text-white transition hover:text-[#00A651]">
-                Leaderboard
-              </Link>
               <Link href="/analytics" className="text-white transition hover:text-[#00A651]">
                 Analytics
+              </Link>
+              <Link href="/predict-groups" className="text-white transition hover:text-[#00A651]">
+                Group Stage
               </Link>
             </div>
           </nav>
