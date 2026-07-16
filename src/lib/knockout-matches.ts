@@ -43,5 +43,5 @@ export const KNOCKOUT_MATCHES: Match[] = [
   { id: 'k31', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Loser Match 29', awayTeamPlaceholder: 'Loser Match 30', group: '', stage: '3rd', matchDate: '2026-07-21T19:00:00Z' },
 
   // ── FINAL ───────────────────────────────────────────────
-  { id: 'k32', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Winner Match 29', awayTeamPlaceholder: 'Winner Match 30', group: '', stage: 'Final', matchDate: '2026-07-22T19:00:00Z' },
+  { id: 'k32', homeTeam: 'Spain', awayTeam: 'Argentina', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'Final', matchDate: '2026-07-19T19:00:00Z' },
 ];

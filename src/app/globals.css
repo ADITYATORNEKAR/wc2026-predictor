@@ -30,3 +30,25 @@ body {
 .sf-tab-muted {
   box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.4);
 }
+
+@keyframes finalTabShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes finalTabGlowPulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.6); }
+  50% { box-shadow: 0 0 26px 10px rgba(255, 215, 0, 1); }
+}
+
+.final-tab-shimmer {
+  background-image: linear-gradient(120deg, #8a6300, #ffd700, #ffec8b, #ffd700, #8a6300);
+  background-size: 300% 300%;
+  animation: finalTabShimmer 3s ease-in-out infinite, finalTabGlowPulse 1.8s ease-in-out infinite;
+}
+
+.final-tab-muted {
+  background: linear-gradient(135deg, rgba(138, 99, 0, 0.5), rgba(255, 215, 0, 0.25));
+  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.5);
+}
