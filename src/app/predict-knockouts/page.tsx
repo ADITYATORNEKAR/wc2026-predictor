@@ -17,8 +17,8 @@ const FINAL_FLAG_EMOJI: Record<string, string> = { Spain: "🇪🇸", Argentina:
 const CONSOLATION_MATCH_IDS = new Set(["k1", "k4"]);
 
 const TABS: { label: string; stages: string[] }[] = [
-  { label: "Semi Finals",    stages: ["SF"] },
   { label: "Final",          stages: ["Final", "3rd"] },
+  { label: "Semi Finals",    stages: ["SF"] },
   { label: "Quarter Finals", stages: ["QF"] },
   { label: "Round of 16",    stages: ["R16"] },
   { label: "Round of 32",    stages: ["R32"] },
@@ -414,7 +414,6 @@ export default function PredictKnockoutsPage() {
 
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[#00573F] pb-2">
         {TABS.map((t, index) => {
-          const isSF = t.label === "Semi Finals";
           const isFinal = t.label === "Final";
           const isActive = activeTab === index;
 
@@ -426,26 +425,6 @@ export default function PredictKnockoutsPage() {
                 className={`rounded-md px-5 py-2.5 text-lg font-extrabold uppercase tracking-wider transition ${
                   isActive ? "final-tab-shimmer text-[#1a1300]" : "final-tab-muted text-[#FFD700]"
                 }`}
-              >
-                🏆 {t.label}
-              </button>
-            );
-          }
-
-          if (isSF) {
-            return (
-              <button
-                key={t.label}
-                onClick={() => setActiveTab(index)}
-                className={`rounded-md px-4 py-2 text-base font-bold transition ${
-                  isActive ? "sf-tab-glow" : "sf-tab-muted"
-                }`}
-                style={{
-                  background: isActive
-                    ? "linear-gradient(135deg, #FFD700, #FFA500)"
-                    : "linear-gradient(135deg, rgba(255,215,0,0.35), rgba(255,165,0,0.35))",
-                  color: isActive ? "#003B2B" : "#FFD700",
-                }}
               >
                 🏆 {t.label}
               </button>

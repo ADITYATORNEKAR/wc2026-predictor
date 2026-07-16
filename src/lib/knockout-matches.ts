@@ -40,7 +40,7 @@ export const KNOCKOUT_MATCHES: Match[] = [
   { id: 'k30', homeTeam: 'England', awayTeam: 'Argentina', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'SF', matchDate: '2026-07-15T19:00:00Z' },
 
   // ── 3RD PLACE PLAY-OFF ──────────────────────────────────
-  { id: 'k31', homeTeam: '', awayTeam: '', homeTeamPlaceholder: 'Loser Match 29', awayTeamPlaceholder: 'Loser Match 30', group: '', stage: '3rd', matchDate: '2026-07-21T19:00:00Z' },
+  { id: 'k31', homeTeam: 'France', awayTeam: 'England', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: '3rd', matchDate: '2026-07-18T21:00:00Z' },
 
   // ── FINAL ───────────────────────────────────────────────
   { id: 'k32', homeTeam: 'Spain', awayTeam: 'Argentina', homeTeamPlaceholder: '', awayTeamPlaceholder: '', group: '', stage: 'Final', matchDate: '2026-07-19T19:00:00Z' },
