@@ -1,5 +1,6 @@
 import Link from "next/link";
-import HomeBracket from "@/components/HomeBracket";
+import GrandFinalHero from "@/components/GrandFinalHero";
+import RecentKnockoutResults from "@/components/RecentKnockoutResults";
 import TopLeaderboard from "@/components/TopLeaderboard";
 
 export default function Home() {
@@ -30,11 +31,14 @@ export default function Home() {
       </section>
 
       <section className="bg-[#002820] px-4 py-16">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-2xl tracking-wide text-[#00A651]">
-            🏆 Knockout Stage
+        <div className="mx-auto max-w-3xl">
+          <GrandFinalHero />
+
+          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl tracking-wide text-[#00A651]">
+            Other Upcoming
           </h2>
-          <HomeBracket />
+          <RecentKnockoutResults />
+
           <p className="mt-4 text-center text-xs text-[#94a3b8]">
             ⚡ Results synced from ESPN
           </p>
